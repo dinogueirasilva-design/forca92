@@ -1,0 +1,11 @@
+FORÇA 92 — instalação no GitHub Pages
+
+1. Crie um repositório público no GitHub (ex.: forca92).
+2. Faça upload dos 5 arquivos desta pasta na raiz do repositório.
+3. Settings > Pages > Build and deployment > Deploy from a branch > main > /(root) > Save.
+4. Aguarde a URL https://SEU-USUARIO.github.io/forca92/ aparecer em Pages.
+5. Abra essa URL no Safari do iPhone > Compartilhar > Adicionar à Tela de Início.
+6. No aplicativo, abra Ficha para adicionar, remover ou editar exercícios.
+7. Use Backup para exportar os dados periodicamente. Os dados ficam no navegador do dispositivo e não no GitHub.
+
+ATENÇÃO: se você já usou a versão anterior em outro endereço/origem, exporte o backup antigo e importe nesta versão.
