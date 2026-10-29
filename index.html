@@ -187,6 +187,30 @@ table.t{width:100%;border-collapse:collapse;font-size:13px}
 table.t td,table.t th{padding:7px 4px;border-bottom:1px solid var(--line);text-align:left}
 table.t th{color:var(--mut);font-weight:600;font-size:11px}
 
+/* câmera / check-in */
+.cam{position:fixed;inset:0;z-index:60;background:#050607;display:flex;flex-direction:column;padding:calc(10px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom));gap:8px;overflow-y:auto}
+.cam-top{display:flex;justify-content:space-between;align-items:center}
+.cam-top b{font-size:22px;color:var(--y)}
+.cam-dots{display:flex;gap:5px}.cam-dots i{flex:1;height:4px;border-radius:3px;background:#2a3038}.cam-dots i.ok{background:#8a7420}.cam-dots i.on{background:var(--y)}
+.cam-stage{position:relative;flex:1;min-height:52vh;border-radius:14px;overflow:hidden;background:#111}
+.cam-stage video,.cam-stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.cam-stage .mirror{transform:scaleX(-1)}
+#camGhost{pointer-events:none}
+#camShot{background:#111;z-index:2}
+.cam-count{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--head);font-size:120px;color:var(--y);text-shadow:0 4px 30px #000;z-index:3}
+.cam-nolive{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;color:var(--mut);font-size:14px}
+.cam-hint{margin:0;font-size:13px;color:#d6dbe0;text-align:center}
+.cam-ghost{display:flex;align-items:center;gap:10px}.cam-ghost small{white-space:nowrap}.cam-ghost input{padding:0;border:0;background:none;accent-color:var(--y)}
+.cam-btns{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.cam-btns .btn-y,.cam-btns #camRetake{flex:1}
+.shutter{width:68px;height:68px;border-radius:50%;background:#fff;border:5px solid var(--y);padding:0;flex:0 0 auto;box-shadow:0 0 0 3px #000 inset}
+.cam-form{background:#0f1317;border-radius:14px;padding:12px}
+.seg5{grid-template-columns:repeat(5,1fr)}.seg5 button{font-size:12.5px;padding:10px 2px}
+.photos.one{grid-template-columns:1fr}
+.ph.tall{aspect-ratio:3/4}.ph.tall img{object-fit:cover}
+.ph.empty{display:grid;place-items:center}.ph.empty img{opacity:0}.ph.empty::after{content:'sem foto';color:var(--mut2);font-size:12px}
+.lib-open .photos{grid-template-columns:repeat(2,minmax(0,1fr))}
+
 /* toast */
 .toast{position:fixed;left:50%;top:calc(76px + env(safe-area-inset-top));transform:translateX(-50%) translateY(-20px);opacity:0;z-index:50;background:#1d242b;border:1px solid var(--y);color:var(--txt);
   padding:11px 16px;border-radius:12px;font-size:14px;font-weight:600;transition:.25s;max-width:92vw;box-shadow:0 10px 30px #000a;pointer-events:none}
@@ -233,6 +257,23 @@ table.t th{color:var(--mut);font-weight:600;font-size:11px}
   <button data-tab="cloud"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .5-7.97A6 6 0 0 0 6 9.5 4.25 4.25 0 0 0 7 18z"/></svg>Nuvem</button>
 </nav>
 
+<div class="cam hidden" id="cam">
+  <div class="cam-top"><div><b id="camPose" class="head"></b> <small id="camStep"></small></div><button class="btn-g btn-sm" id="camClose">✕</button></div>
+  <div class="cam-dots" id="camDots"></div>
+  <div class="cam-stage" id="camLive">
+    <video id="camVideo" playsinline muted autoplay></video>
+    <img id="camGhost" class="hidden" alt="">
+    <img id="camShot" class="hidden" alt="">
+    <div id="camCount" class="cam-count hidden"></div>
+    <div id="camNoLive" class="cam-nolive hidden"></div>
+  </div>
+  <div class="cam-form hidden" id="camForm"></div>
+  <p class="cam-hint" id="camHint"></p>
+  <div class="cam-ghost hidden" id="camGhostCtl"><small>Foto anterior</small><input type="range" id="camOpacity" min="0" max=".7" step=".05" value=".35"></div>
+  <div class="cam-btns" id="camBtnsLive"><button class="btn-g btn-sm" id="camGallery">🖼 Galeria / câmera</button><button class="btn-g btn-sm" id="camFlip">🔄</button><button class="btn-g btn-sm" id="camTimer">⏱ 10s</button><button class="shutter" id="camShoot" aria-label="Fotografar"></button><button class="btn-sm" style="background:none;color:var(--mut)" id="camSkip">pular</button></div>
+  <div class="cam-btns hidden" id="camBtnsShot"><button class="btn-g" id="camRetake">Refazer</button><button class="btn-g btn-sm" id="camGallery2">🖼</button><button class="btn-sm" style="background:none;color:var(--mut)" id="camSkip2">pular</button><button class="btn-y" id="camUse">Usar foto ✓</button></div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -242,7 +283,7 @@ table.t th{color:var(--mut);font-weight:600;font-size:11px}
    FORÇA 92 — V8
    Compatível com os dados da V5–V7 (mesma chave local e mesma tabela).
    ===================================================================== */
-const APP_VERSION = '8.0.1';
+const APP_VERSION = '8.1';
 const KEY = 'forca92.v5';           // mesma chave das versões anteriores: dados preservados
 const CLOUD_KEY = 'forca92.cloud';
 const PENDING_KEY = 'forca92.photoPending';
@@ -258,33 +299,576 @@ const PLANS = [
 ];
 const DAY_SHORT = ['Peito','Costas','Pernas A','Superior','Pernas B'];
 
+// [grupo, execução, fotos, padrão de movimento, músculo, tipo c=composto i=isolado]
 const EX = {
- 'Supino inclinado com halteres':['Peito','Banco inclinado 20–35°. Escápulas apoiadas; desça com controle e empurre sem bater os halteres.',['incline-dumbbell-press-0.jpg','incline-dumbbell-press-1.jpg']],
- 'Supino reto na máquina':['Peito','Ajuste o assento com as alças na altura do peito. Empurre à frente e retorne lentamente.',['leverage-chest-press-0.jpg','leverage-chest-press-1.jpg']],
- 'Peck deck':['Peito','Ajuste o banco; mantenha cotovelos levemente flexionados e aproxime os braços sem impulso.',['butterfly-0.jpg','butterfly-1.jpg']],
- 'Supino inclinado na máquina':['Peito','Ajuste o assento para empurrar as alças à frente e para cima, sem elevar os ombros.',['leverage-incline-chest-press-0.jpg','leverage-incline-chest-press-1.jpg']],
- 'Tríceps corda':['Tríceps','Cotovelos junto ao tronco; estenda os braços para baixo e separe a corda ao final.',['triceps-pushdown---rope-attachment-0.jpg','triceps-pushdown---rope-attachment-1.jpg']],
- 'Tríceps polia alta com barra':['Tríceps','Em pé, cotovelos fixos junto ao corpo, empurre a barra para baixo sem usar o tronco.',['triceps-pushdown-0.jpg','triceps-pushdown-1.jpg']],
- 'Puxada larga pronada':['Costas','Segure a barra com palmas para frente; puxe em direção à parte superior do peito.',['wide-grip-lat-pulldown-0.jpg','wide-grip-lat-pulldown-1.jpg']],
- 'Remada fechada neutra':['Costas','Segure o triângulo; puxe em direção ao abdômen sem balançar o tronco.',['seated-cable-rows-0.jpg','seated-cable-rows-1.jpg']],
- 'Remada posterior sentado':['Costas','Na máquina de remada, puxe com cotovelos levemente abertos e peito apoiado, se disponível.',['leverage-high-row-0.jpg','leverage-high-row-1.jpg']],
- 'Remada articulada':['Costas','Apoie o peito e puxe as alças com os cotovelos para trás, sem encolher os ombros.',['leverage-iso-row-0.jpg','leverage-iso-row-1.jpg']],
- 'Borboleta invertida':['Ombros','Sente de frente para o encosto e abra os braços sem erguer os ombros.',['reverse-machine-flyes-0.jpg','reverse-machine-flyes-1.jpg']],
- 'Rosca Scott unilateral':['Bíceps','Apoie o braço no banco Scott; flexione o cotovelo sem tirar o braço do apoio.',['one-arm-dumbbell-preacher-curl-0.jpg','one-arm-dumbbell-preacher-curl-1.jpg']],
- 'Rosca bíceps inclinado':['Bíceps','Sente no banco inclinado com braços atrás do tronco; flexione sem balançar.',['incline-dumbbell-curl-0.jpg','incline-dumbbell-curl-1.jpg']],
- 'Rosca martelo':['Bíceps','Mantenha as palmas voltadas uma para a outra; suba sem mexer os ombros.',['hammer-curls-0.jpg','hammer-curls-1.jpg']],
- 'Rosca direta barra EZ':['Bíceps','Cotovelos junto ao tronco; eleve a barra W sem impulso.',['ez-bar-curl-0.jpg','ez-bar-curl-1.jpg']],
- 'Agachamento hack ou Smith':['Pernas','Escolha hack ou Smith. Desça com controle até amplitude confortável e suba empurrando o chão.',['hack-squat-0.jpg','hack-squat-1.jpg']],
- 'Leg press 45°':['Pernas','Pés firmes na plataforma; flexione joelhos com controle sem arredondar a lombar.',['leg-press-0.jpg','leg-press-1.jpg']],
- 'Cadeira extensora':['Pernas','Ajuste o eixo ao joelho; estenda as pernas sem dar trancos.',['leg-extensions-0.jpg','leg-extensions-1.jpg']],
- 'Flexora sentada':['Pernas','Alinhe o joelho ao eixo da máquina e flexione as pernas controlando a volta.',['seated-leg-curl-0.jpg','seated-leg-curl-1.jpg']],
- 'Stiff com halteres':['Pernas','Quadril vai para trás; joelhos semiflexionados e coluna neutra, sem forçar amplitude.',['stiff-legged-dumbbell-deadlift-0.jpg','stiff-legged-dumbbell-deadlift-1.jpg']],
- 'Elevação pélvica na máquina':['Pernas','Apoie a parte superior das costas; eleve o quadril até alinhar tronco e coxas.',['barbell-hip-thrust-0.jpg','barbell-hip-thrust-1.jpg']],
- 'Desenvolvimento de ombros na máquina':['Ombros','Empurre as alças para cima sem arquear excessivamente a lombar.',['leverage-shoulder-press-0.jpg','leverage-shoulder-press-1.jpg']],
- 'Elevação lateral com halteres':['Ombros','Levante os braços lateralmente até altura confortável, sem embalo.',['side-lateral-raise-0.jpg','side-lateral-raise-1.jpg']],
- 'Panturrilha em pé':['Panturrilha','Eleve os calcanhares e desça devagar, com amplitude controlada.',['standing-calf-raises-0.jpg','standing-calf-raises-1.jpg']],
- 'Panturrilha no leg press':['Panturrilha','Mantenha joelhos estáveis; movimente apenas os tornozelos na plataforma.',['calf-press-on-the-leg-press-machine-0.jpg','calf-press-on-the-leg-press-machine-1.jpg']],
- 'Abdômen máquina':['Abdômen','Flexione o tronco contra a resistência, evitando puxar com os braços.',['ab-crunch-machine-0.jpg','ab-crunch-machine-1.jpg']]
+"Supino inclinado com halteres": [
+"Peito",
+"Banco inclinado 20–35°. Escápulas apoiadas; desça com controle e empurre sem bater os halteres.",
+[
+"incline-dumbbell-press-0.jpg",
+"incline-dumbbell-press-1.jpg"],
+"sup_incl",
+"Peito",
+"c"],
+"Supino inclinado na máquina": [
+"Peito",
+"Ajuste o assento para empurrar as alças à frente e para cima, sem elevar os ombros.",
+[
+"leverage-incline-chest-press-0.jpg",
+"leverage-incline-chest-press-1.jpg"],
+"sup_incl",
+"Peito",
+"c"],
+"Supino inclinado no Smith": [
+"Peito",
+"Banco a 30°; barra desce na parte alta do peito, cotovelos levemente fechados.",
+[
+"smith-machine-incline-bench-press-0.jpg",
+"smith-machine-incline-bench-press-1.jpg"],
+"sup_incl",
+"Peito",
+"c"],
+"Supino inclinado com barra": [
+"Peito",
+"Banco a 30°; pegada média, desça até a parte alta do peito e empurre sem tirar os glúteos do banco.",
+[
+"barbell-incline-bench-press---medium-grip-0.jpg",
+"barbell-incline-bench-press---medium-grip-1.jpg"],
+"sup_incl",
+"Peito",
+"c"],
+"Supino reto na máquina": [
+"Peito",
+"Ajuste o assento com as alças na altura do peito. Empurre à frente e retorne lentamente.",
+[
+"leverage-chest-press-0.jpg",
+"leverage-chest-press-1.jpg"],
+"sup_reto",
+"Peito",
+"c"],
+"Supino reto com halteres": [
+"Peito",
+"Escápulas retraídas, pés firmes; desça os halteres ao lado do peito e empurre em leve arco.",
+[
+"dumbbell-bench-press-0.jpg",
+"dumbbell-bench-press-1.jpg"],
+"sup_reto",
+"Peito",
+"c"],
+"Supino reto com barra": [
+"Peito",
+"Pegada pouco além dos ombros; barra toca o meio do peito com controle, sem quicar.",
+[
+"barbell-bench-press---medium-grip-0.jpg",
+"barbell-bench-press---medium-grip-1.jpg"],
+"sup_reto",
+"Peito",
+"c"],
+"Peck deck": [
+"Peito",
+"Ajuste o banco; mantenha cotovelos levemente flexionados e aproxime os braços sem impulso.",
+[
+"butterfly-0.jpg",
+"butterfly-1.jpg"],
+"cruc",
+"Peito",
+"i"],
+"Crossover na polia": [
+"Peito",
+"Polias altas, leve inclinação do tronco; junte as mãos à frente do corpo mantendo os cotovelos fixos.",
+[
+"cable-crossover-0.jpg",
+"cable-crossover-1.jpg"],
+"cruc",
+"Peito",
+"i"],
+"Crucifixo com halteres": [
+"Peito",
+"Banco reto; abra os braços em arco até alongar o peito, cotovelos levemente flexionados.",
+[
+"dumbbell-flyes-0.jpg",
+"dumbbell-flyes-1.jpg"],
+"cruc",
+"Peito",
+"i"],
+"Tríceps corda": [
+"Tríceps",
+"Cotovelos junto ao tronco; estenda os braços para baixo e separe a corda ao final.",
+[
+"triceps-pushdown---rope-attachment-0.jpg",
+"triceps-pushdown---rope-attachment-1.jpg"],
+"tri",
+"Tríceps",
+"i"],
+"Tríceps polia alta com barra": [
+"Tríceps",
+"Em pé, cotovelos fixos junto ao corpo, empurre a barra para baixo sem usar o tronco.",
+[
+"triceps-pushdown-0.jpg",
+"triceps-pushdown-1.jpg"],
+"tri",
+"Tríceps",
+"i"],
+"Tríceps barra V": [
+"Tríceps",
+"Cotovelos colados ao corpo; estenda totalmente e volte devagar até 90°.",
+[
+"triceps-pushdown---v-bar-attachment-0.jpg",
+"triceps-pushdown---v-bar-attachment-1.jpg"],
+"tri",
+"Tríceps",
+"i"],
+"Tríceps testa com barra W": [
+"Tríceps",
+"Deitado, cotovelos apontando para cima; desça a barra em direção à testa e estenda.",
+[
+"ez-bar-skullcrusher-0.jpg",
+"ez-bar-skullcrusher-1.jpg"],
+"tri_along",
+"Tríceps",
+"i"],
+"Tríceps francês na corda": [
+"Tríceps",
+"De costas para a polia, braços acima da cabeça; estenda os cotovelos sem abrir os braços.",
+[
+"cable-rope-overhead-triceps-extension-0.jpg",
+"cable-rope-overhead-triceps-extension-1.jpg"],
+"tri_along",
+"Tríceps",
+"i"],
+"Puxada larga pronada": [
+"Costas",
+"Segure a barra com palmas para frente; puxe em direção à parte superior do peito.",
+[
+"wide-grip-lat-pulldown-0.jpg",
+"wide-grip-lat-pulldown-1.jpg"],
+"puxada",
+"Costas",
+"c"],
+"Puxada supinada": [
+"Costas",
+"Palmas voltadas para você, pegada na largura dos ombros; puxe até o queixo levando os cotovelos para baixo.",
+[
+"underhand-cable-pulldowns-0.jpg",
+"underhand-cable-pulldowns-1.jpg"],
+"puxada",
+"Costas",
+"c"],
+"Puxada com triângulo": [
+"Costas",
+"Pegada neutra fechada; puxe até o alto do peito com o tronco levemente inclinado.",
+[
+"v-bar-pulldown-0.jpg",
+"v-bar-pulldown-1.jpg"],
+"puxada",
+"Costas",
+"c"],
+"Remada fechada neutra": [
+"Costas",
+"Segure o triângulo; puxe em direção ao abdômen sem balançar o tronco.",
+[
+"seated-cable-rows-0.jpg",
+"seated-cable-rows-1.jpg"],
+"remada",
+"Costas",
+"c"],
+"Remada posterior sentado": [
+"Costas",
+"Na máquina de remada, puxe com cotovelos levemente abertos e peito apoiado, se disponível.",
+[
+"leverage-high-row-0.jpg",
+"leverage-high-row-1.jpg"],
+"remada",
+"Costas",
+"c"],
+"Remada articulada": [
+"Costas",
+"Apoie o peito e puxe as alças com os cotovelos para trás, sem encolher os ombros.",
+[
+"leverage-iso-row-0.jpg",
+"leverage-iso-row-1.jpg"],
+"remada",
+"Costas",
+"c"],
+"Remada unilateral com halter": [
+"Costas",
+"Joelho e mão apoiados no banco; puxe o halter em direção ao quadril, coluna neutra.",
+[
+"one-arm-dumbbell-row-0.jpg",
+"one-arm-dumbbell-row-1.jpg"],
+"remada",
+"Costas",
+"c"],
+"Remada curvada com barra": [
+"Costas",
+"Tronco inclinado ~45°, coluna neutra; puxe a barra até o umbigo.",
+[
+"bent-over-barbell-row-0.jpg",
+"bent-over-barbell-row-1.jpg"],
+"remada",
+"Costas",
+"c"],
+"Remada cavalinho": [
+"Costas",
+"Peito sobre a barra, coluna neutra; puxe a pegada até o abdômen.",
+[
+"t-bar-row-with-handle-0.jpg",
+"t-bar-row-with-handle-1.jpg"],
+"remada",
+"Costas",
+"c"],
+"Borboleta invertida": [
+"Ombros",
+"Sente de frente para o encosto e abra os braços sem erguer os ombros.",
+[
+"reverse-machine-flyes-0.jpg",
+"reverse-machine-flyes-1.jpg"],
+"delt_post",
+"Ombros",
+"i"],
+"Crucifixo inverso com halteres": [
+"Ombros",
+"Tronco inclinado à frente; abra os braços lateralmente com cotovelos semiflexionados.",
+[
+"reverse-flyes-0.jpg",
+"reverse-flyes-1.jpg"],
+"delt_post",
+"Ombros",
+"i"],
+"Face pull": [
+"Ombros",
+"Corda na altura do rosto; puxe abrindo as mãos para os lados das orelhas.",
+[
+"face-pull-0.jpg",
+"face-pull-1.jpg"],
+"delt_post",
+"Ombros",
+"i"],
+"Desenvolvimento de ombros na máquina": [
+"Ombros",
+"Empurre as alças para cima sem arquear excessivamente a lombar.",
+[
+"leverage-shoulder-press-0.jpg",
+"leverage-shoulder-press-1.jpg"],
+"desenv",
+"Ombros",
+"c"],
+"Desenvolvimento com halteres": [
+"Ombros",
+"Sentado com encosto; halteres na altura das orelhas, empurre para cima sem bater.",
+[
+"dumbbell-shoulder-press-0.jpg",
+"dumbbell-shoulder-press-1.jpg"],
+"desenv",
+"Ombros",
+"c"],
+"Desenvolvimento no Smith": [
+"Ombros",
+"Sentado sob a barra; desça até a altura do queixo e empurre.",
+[
+"smith-machine-overhead-shoulder-press-0.jpg",
+"smith-machine-overhead-shoulder-press-1.jpg"],
+"desenv",
+"Ombros",
+"c"],
+"Elevação lateral com halteres": [
+"Ombros",
+"Levante os braços lateralmente até altura confortável, sem embalo.",
+[
+"side-lateral-raise-0.jpg",
+"side-lateral-raise-1.jpg"],
+"lateral",
+"Ombros",
+"i"],
+"Elevação lateral sentado": [
+"Ombros",
+"Sentado, sem impulso do tronco; eleve os halteres até a linha dos ombros.",
+[
+"seated-side-lateral-raise-0.jpg",
+"seated-side-lateral-raise-1.jpg"],
+"lateral",
+"Ombros",
+"i"],
+"Elevação lateral na polia": [
+"Ombros",
+"Polia baixa ao lado do corpo; eleve o braço até a altura do ombro com tensão constante.",
+[
+"cable-seated-lateral-raise-0.jpg",
+"cable-seated-lateral-raise-1.jpg"],
+"lateral",
+"Ombros",
+"i"],
+"Rosca Scott unilateral": [
+"Bíceps",
+"Apoie o braço no banco Scott; flexione o cotovelo sem tirar o braço do apoio.",
+[
+"one-arm-dumbbell-preacher-curl-0.jpg",
+"one-arm-dumbbell-preacher-curl-1.jpg"],
+"rosca",
+"Bíceps",
+"i"],
+"Rosca bíceps inclinado": [
+"Bíceps",
+"Sente no banco inclinado com braços atrás do tronco; flexione sem balançar.",
+[
+"incline-dumbbell-curl-0.jpg",
+"incline-dumbbell-curl-1.jpg"],
+"rosca",
+"Bíceps",
+"i"],
+"Rosca martelo": [
+"Bíceps",
+"Mantenha as palmas voltadas uma para a outra; suba sem mexer os ombros.",
+[
+"hammer-curls-0.jpg",
+"hammer-curls-1.jpg"],
+"rosca",
+"Bíceps",
+"i"],
+"Rosca direta barra EZ": [
+"Bíceps",
+"Cotovelos junto ao tronco; eleve a barra W sem impulso.",
+[
+"ez-bar-curl-0.jpg",
+"ez-bar-curl-1.jpg"],
+"rosca",
+"Bíceps",
+"i"],
+"Rosca na polia": [
+"Bíceps",
+"Em pé de frente para a polia baixa; flexione mantendo os cotovelos parados.",
+[
+"standing-biceps-cable-curl-0.jpg",
+"standing-biceps-cable-curl-1.jpg"],
+"rosca",
+"Bíceps",
+"i"],
+"Rosca concentrada": [
+"Bíceps",
+"Sentado, cotovelo apoiado na parte interna da coxa; suba e contraia no topo.",
+[
+"concentration-curls-0.jpg",
+"concentration-curls-1.jpg"],
+"rosca",
+"Bíceps",
+"i"],
+"Rosca Scott na máquina": [
+"Bíceps",
+"Braços apoiados no pad; flexione e desça devagar até quase estender.",
+[
+"machine-preacher-curls-0.jpg",
+"machine-preacher-curls-1.jpg"],
+"rosca",
+"Bíceps",
+"i"],
+"Agachamento hack ou Smith": [
+"Pernas",
+"Escolha hack ou Smith. Desça com controle até amplitude confortável e suba empurrando o chão.",
+[
+"hack-squat-0.jpg",
+"hack-squat-1.jpg"],
+"agach",
+"Quadríceps",
+"c"],
+"Agachamento livre": [
+"Pernas",
+"Barra apoiada no trapézio, pés na largura dos ombros; desça com coluna neutra e suba empurrando o chão.",
+[
+"barbell-squat-0.jpg",
+"barbell-squat-1.jpg"],
+"agach",
+"Quadríceps",
+"c"],
+"Agachamento no Smith": [
+"Pernas",
+"Pés levemente à frente da barra; desça com controle mantendo o tronco firme.",
+[
+"smith-machine-squat-0.jpg",
+"smith-machine-squat-1.jpg"],
+"agach",
+"Quadríceps",
+"c"],
+"Leg press 45°": [
+"Pernas",
+"Pés firmes na plataforma; flexione joelhos com controle sem arredondar a lombar.",
+[
+"leg-press-0.jpg",
+"leg-press-1.jpg"],
+"legpress",
+"Quadríceps",
+"c"],
+"Agachamento búlgaro": [
+"Pernas",
+"Pé de trás apoiado no banco; desça o joelho de trás em direção ao chão, tronco firme.",
+[
+"split-squat-with-dumbbells-0.jpg",
+"split-squat-with-dumbbells-1.jpg"],
+"legpress",
+"Quadríceps",
+"c"],
+"Afundo com halteres": [
+"Pernas",
+"Passo à frente e desça até os dois joelhos ficarem perto de 90°; volte empurrando com a perna da frente.",
+[
+"dumbbell-lunges-0.jpg",
+"dumbbell-lunges-1.jpg"],
+"legpress",
+"Quadríceps",
+"c"],
+"Cadeira extensora": [
+"Pernas",
+"Ajuste o eixo ao joelho; estenda as pernas sem dar trancos.",
+[
+"leg-extensions-0.jpg",
+"leg-extensions-1.jpg"],
+"extensora",
+"Quadríceps",
+"i"],
+"Cadeira extensora unilateral": [
+"Pernas",
+"Uma perna por vez, mesmo ajuste do eixo; segure 1 s no topo.",
+[
+"single-leg-leg-extension-0.jpg",
+"single-leg-leg-extension-1.jpg"],
+"extensora",
+"Quadríceps",
+"i"],
+"Flexora sentada": [
+"Pernas",
+"Alinhe o joelho ao eixo da máquina e flexione as pernas controlando a volta.",
+[
+"seated-leg-curl-0.jpg",
+"seated-leg-curl-1.jpg"],
+"flexora",
+"Posteriores",
+"i"],
+"Flexora deitada": [
+"Pernas",
+"Quadril colado no banco; flexione os joelhos sem levantar o quadril.",
+[
+"lying-leg-curls-0.jpg",
+"lying-leg-curls-1.jpg"],
+"flexora",
+"Posteriores",
+"i"],
+"Flexora em pé": [
+"Pernas",
+"Uma perna por vez, tronco apoiado; flexione o joelho com controle.",
+[
+"standing-leg-curl-0.jpg",
+"standing-leg-curl-1.jpg"],
+"flexora",
+"Posteriores",
+"i"],
+"Stiff com halteres": [
+"Pernas",
+"Quadril vai para trás; joelhos semiflexionados e coluna neutra, sem forçar amplitude.",
+[
+"stiff-legged-dumbbell-deadlift-0.jpg",
+"stiff-legged-dumbbell-deadlift-1.jpg"],
+"hinge",
+"Posteriores",
+"c"],
+"Levantamento terra romeno": [
+"Pernas",
+"Barra rente às coxas; leve o quadril para trás até alongar os posteriores e volte contraindo glúteos.",
+[
+"romanian-deadlift-0.jpg",
+"romanian-deadlift-1.jpg"],
+"hinge",
+"Posteriores",
+"c"],
+"Stiff com barra": [
+"Pernas",
+"Joelhos quase estendidos, coluna neutra; desça a barra até alongar os posteriores.",
+[
+"stiff-legged-barbell-deadlift-0.jpg",
+"stiff-legged-barbell-deadlift-1.jpg"],
+"hinge",
+"Posteriores",
+"c"],
+"Elevação pélvica na máquina": [
+"Pernas",
+"Apoie a parte superior das costas; eleve o quadril até alinhar tronco e coxas.",
+[
+"barbell-hip-thrust-0.jpg",
+"barbell-hip-thrust-1.jpg"],
+"gluteo",
+"Glúteos",
+"c"],
+"Ponte de glúteo com barra": [
+"Pernas",
+"Deitado no chão, barra sobre o quadril; eleve contraindo glúteos e segure 1 s.",
+[
+"barbell-glute-bridge-0.jpg",
+"barbell-glute-bridge-1.jpg"],
+"gluteo",
+"Glúteos",
+"c"],
+"Cadeira abdutora": [
+"Pernas",
+"Costas apoiadas; abra as pernas contra a resistência e volte devagar.",
+[
+"thigh-abductor-0.jpg",
+"thigh-abductor-1.jpg"],
+"gluteo",
+"Glúteos",
+"i"],
+"Panturrilha em pé": [
+"Panturrilha",
+"Eleve os calcanhares e desça devagar, com amplitude controlada.",
+[
+"standing-calf-raises-0.jpg",
+"standing-calf-raises-1.jpg"],
+"pant",
+"Panturrilha",
+"i"],
+"Panturrilha no leg press": [
+"Panturrilha",
+"Mantenha joelhos estáveis; movimente apenas os tornozelos na plataforma.",
+[
+"calf-press-on-the-leg-press-machine-0.jpg",
+"calf-press-on-the-leg-press-machine-1.jpg"],
+"pant",
+"Panturrilha",
+"i"],
+"Panturrilha sentado": [
+"Panturrilha",
+"Joelhos sob o apoio; desça os calcanhares ao máximo e suba até a ponta dos pés.",
+[
+"seated-calf-raise-0.jpg",
+"seated-calf-raise-1.jpg"],
+"pant",
+"Panturrilha",
+"i"],
+"Abdômen máquina": [
+"Abdômen",
+"Flexione o tronco contra a resistência, evitando puxar com os braços.",
+[
+"ab-crunch-machine-0.jpg",
+"ab-crunch-machine-1.jpg"],
+"abd",
+"Abdômen",
+"i"],
+"Abdominal na polia": [
+"Abdômen",
+"Ajoelhado, corda junto à cabeça; flexione o tronco levando os cotovelos aos joelhos.",
+[
+"cable-crunch-0.jpg",
+"cable-crunch-1.jpg"],
+"abd",
+"Abdômen",
+"i"],
+"Elevação de pernas na barra": [
+"Abdômen",
+"Pendurado na barra; eleve as pernas sem balanço, enrolando o quadril no final.",
+[
+"hanging-leg-raise-0.jpg",
+"hanging-leg-raise-1.jpg"],
+"abd",
+"Abdômen",
+"i"
+]
 };
 const GROUPS = ['Peito','Costas','Ombros','Bíceps','Tríceps','Pernas','Panturrilha','Abdômen'];
 const exInfo = n => EX[n] || ['Outros','Movimento controlado, postura estável e amplitude confortável.',[]];
@@ -322,7 +906,8 @@ function normalize(s){
   for(const f of ['sessions','measurements','bodyScans','planHistory','library']) if(!Array.isArray(s[f])) s[f] = [];
   if(!s.drafts || typeof s.drafts !== 'object') s.drafts = {};
   if(!Array.isArray(s.plans) || !s.plans.length) s.plans = clone(PLANS);
-  s.deleted ||= {}; s.deleted.sessions ||= {}; s.deleted.measurements ||= {}; s.deleted.drafts ||= {};
+  s.deleted ||= {}; s.deleted.sessions ||= {}; s.deleted.measurements ||= {}; s.deleted.drafts ||= {}; s.deleted.checkins ||= {};
+  if(!Array.isArray(s.checkins)) s.checkins = [];
   s.photos ||= {};
   s.settings ||= {}; s.settings.rest ||= 90;
   if(typeof s.nextDay !== 'number' || s.nextDay < 0 || s.nextDay > 4) s.nextDay = 0;
@@ -349,8 +934,8 @@ function maxMap(a={}, b={}){ const o = {...a}; for(const [k,v] of Object.entries
 function merge(a, b){
   a = normalize(clone(a)); b = normalize(clone(b));
   const out = clone(a);
-  out.deleted = { sessions:maxMap(a.deleted.sessions,b.deleted.sessions), measurements:maxMap(a.deleted.measurements,b.deleted.measurements), drafts:maxMap(a.deleted.drafts,b.deleted.drafts) };
-  for(const f of ['sessions','measurements','bodyScans','planHistory']){
+  out.deleted = { sessions:maxMap(a.deleted.sessions,b.deleted.sessions), measurements:maxMap(a.deleted.measurements,b.deleted.measurements), drafts:maxMap(a.deleted.drafts,b.deleted.drafts), checkins:maxMap(a.deleted.checkins,b.deleted.checkins) };
+  for(const f of ['sessions','measurements','bodyScans','planHistory','checkins']){
     const m = new Map();
     for(const it of [...b[f], ...a[f]]){ const k = keyOf(it), prev = m.get(k); m.set(k, !prev ? it : (itemStamp(it) >= itemStamp(prev) ? it : prev)); }
     let arr = [...m.values()];
@@ -369,6 +954,7 @@ function merge(a, b){
   for(const [n,p] of Object.entries(a.photos)) if(!out.photos[n] || stamp(p.updatedAt) >= stamp(out.photos[n].updatedAt)) out.photos[n] = p;
   if(stamp(b.settingsAt) > stamp(a.settingsAt)){ out.settings = b.settings; out.settingsAt = b.settingsAt; }
   out.plans = a.plans || b.plans || clone(PLANS);
+  if(stamp(b.plansAt) > stamp(a.plansAt)){ out.plans = b.plans; out.plansAt = b.plansAt; out.planBlock = b.planBlock; out.planStartedAt = b.planStartedAt; }
   out.planVersion = Math.max(a.planVersion||0, b.planVersion||0);
   return out;
 }
@@ -434,6 +1020,8 @@ function renderTrain(){
   const stale = saved && hasData(d) && d.date && d.date < today();
   let h = `<div class="pagehead"><div><small>DISCIPLINA · FOCO · EVOLUÇÃO</small><h2>Seu treino</h2></div><span class="badge">D${day+1} / D5</span></div>
   <div class="days">${state.plans.map((p,i) => `<button class="day ${i===day?'sel':''} ${i===state.nextDay?'next':''}" data-day="${i}"><b>D${i+1}</b><span>${esc(DAY_SHORT[i]||p.name)}</span></button>`).join('')}</div>`;
+  if(checkinDue()) h += `<div class="note" style="display:flex;align-items:center;gap:10px"><span style="flex:1">📸 <b>Check-in semanal pendente.</b> ${lastCheckin()?`Último em ${br(lastCheckin().date)}.`:'Faça o primeiro para começar a comparar.'}</span><button class="btn-y btn-sm" id="ckGo">Fazer</button></div>`;
+  else { const A = analysis(); if(A.verdict === 'trocar') h += `<div class="note" style="display:flex;align-items:center;gap:10px"><span style="flex:1">🔁 <b>Hora de trocar a ficha:</b> ${esc(A.reasons.join('; '))}.</span><button class="btn-y btn-sm" id="planGo">Ver</button></div>`; }
   if(day !== state.nextDay) h += `<div class="note">Pela sequência, o próximo treino é o <b>D${state.nextDay+1} — ${esc(state.plans[state.nextDay].name)}</b>. Você pode treinar este mesmo assim.</div>`;
   if(stale) h += `<div class="note">Este treino foi começado em <b>${br(d.date)}</b> e não foi finalizado. Continue de onde parou ou descarte.<div style="margin-top:8px"><button class="btn-d btn-sm" id="discard">Descartar rascunho</button></div></div>`;
   h += `<div class="card session"><div class="row"><h3>Dia ${day+1} — ${esc(plan.name)}</h3><span class="badge solid" id="pill">${done}/${all.length}</span></div>
@@ -527,6 +1115,8 @@ function wireTrain(){
   root.querySelectorAll('[data-zoom]').forEach(img => img.onclick = () => { const det = img.closest('.ex').querySelector('details.how'); det.open = true; });
   wirePhotoButtons(root);
   $('finish').onclick = finishSession;
+  $('ckGo') && ($('ckGo').onclick = openCheckin);
+  $('planGo') && ($('planGo').onclick = () => { tab = 'evo'; evoTab = 'analise'; render(); window.scrollTo({top:0}); });
 }
 function keepScroll(fn){ const y = window.scrollY; fn(); window.scrollTo({top:y}); }
 
@@ -651,6 +1241,7 @@ async function uploadPending(){
   if(!client || !uid) return;
   let changed = false;
   for(const name of pendingList()){
+    if(typeof name !== 'string') continue;
     const v = await idbGet(name+'::own'); if(!v){ setPending(pendingList().filter(n => n !== name)); continue; }
     const path = `${uid}/${slug(name)}.jpg`;
     const {error} = await client.storage.from(BUCKET).upload(path, dataToBlob(typeof v === 'string' ? v : v.data), {upsert:true, contentType:'image/jpeg', cacheControl:'60'});
@@ -686,7 +1277,7 @@ async function migrateLegacyPhotos(){
 
 
 /* ---------- fotos: se falhar, tenta de novo e depois busca na fonte original (CDN) ---------- */
-const CDN_IDS = {"incline-dumbbell-press": "Incline_Dumbbell_Press", "leverage-chest-press": "Leverage_Chest_Press", "butterfly": "Butterfly", "leverage-incline-chest-press": "Leverage_Incline_Chest_Press", "triceps-pushdown---rope-attachment": "Triceps_Pushdown_-_Rope_Attachment", "triceps-pushdown": "Triceps_Pushdown", "wide-grip-lat-pulldown": "Wide-Grip_Lat_Pulldown", "seated-cable-rows": "Seated_Cable_Rows", "leverage-high-row": "Leverage_High_Row", "leverage-iso-row": "Leverage_Iso_Row", "reverse-machine-flyes": "Reverse_Machine_Flyes", "one-arm-dumbbell-preacher-curl": "One_Arm_Dumbbell_Preacher_Curl", "incline-dumbbell-curl": "Incline_Dumbbell_Curl", "hammer-curls": "Hammer_Curls", "ez-bar-curl": "EZ-Bar_Curl", "hack-squat": "Hack_Squat", "leg-press": "Leg_Press", "leg-extensions": "Leg_Extensions", "seated-leg-curl": "Seated_Leg_Curl", "stiff-legged-dumbbell-deadlift": "Stiff-Legged_Dumbbell_Deadlift", "barbell-hip-thrust": "Barbell_Hip_Thrust", "leverage-shoulder-press": "Leverage_Shoulder_Press", "side-lateral-raise": "Side_Lateral_Raise", "standing-calf-raises": "Standing_Calf_Raises", "calf-press-on-the-leg-press-machine": "Calf_Press_On_The_Leg_Press_Machine", "ab-crunch-machine": "Ab_Crunch_Machine"};
+const CDN_IDS = {"incline-dumbbell-press": "Incline_Dumbbell_Press", "leverage-incline-chest-press": "Leverage_Incline_Chest_Press", "smith-machine-incline-bench-press": "Smith_Machine_Incline_Bench_Press", "barbell-incline-bench-press---medium-grip": "Barbell_Incline_Bench_Press_-_Medium_Grip", "leverage-chest-press": "Leverage_Chest_Press", "dumbbell-bench-press": "Dumbbell_Bench_Press", "barbell-bench-press---medium-grip": "Barbell_Bench_Press_-_Medium_Grip", "butterfly": "Butterfly", "cable-crossover": "Cable_Crossover", "dumbbell-flyes": "Dumbbell_Flyes", "triceps-pushdown---rope-attachment": "Triceps_Pushdown_-_Rope_Attachment", "triceps-pushdown": "Triceps_Pushdown", "triceps-pushdown---v-bar-attachment": "Triceps_Pushdown_-_V-Bar_Attachment", "ez-bar-skullcrusher": "EZ-Bar_Skullcrusher", "cable-rope-overhead-triceps-extension": "Cable_Rope_Overhead_Triceps_Extension", "wide-grip-lat-pulldown": "Wide-Grip_Lat_Pulldown", "underhand-cable-pulldowns": "Underhand_Cable_Pulldowns", "v-bar-pulldown": "V-Bar_Pulldown", "seated-cable-rows": "Seated_Cable_Rows", "leverage-high-row": "Leverage_High_Row", "leverage-iso-row": "Leverage_Iso_Row", "one-arm-dumbbell-row": "One-Arm_Dumbbell_Row", "bent-over-barbell-row": "Bent_Over_Barbell_Row", "t-bar-row-with-handle": "T-Bar_Row_with_Handle", "reverse-machine-flyes": "Reverse_Machine_Flyes", "reverse-flyes": "Reverse_Flyes", "face-pull": "Face_Pull", "leverage-shoulder-press": "Leverage_Shoulder_Press", "dumbbell-shoulder-press": "Dumbbell_Shoulder_Press", "smith-machine-overhead-shoulder-press": "Smith_Machine_Overhead_Shoulder_Press", "side-lateral-raise": "Side_Lateral_Raise", "seated-side-lateral-raise": "Seated_Side_Lateral_Raise", "cable-seated-lateral-raise": "Cable_Seated_Lateral_Raise", "one-arm-dumbbell-preacher-curl": "One_Arm_Dumbbell_Preacher_Curl", "incline-dumbbell-curl": "Incline_Dumbbell_Curl", "hammer-curls": "Hammer_Curls", "ez-bar-curl": "EZ-Bar_Curl", "standing-biceps-cable-curl": "Standing_Biceps_Cable_Curl", "concentration-curls": "Concentration_Curls", "machine-preacher-curls": "Machine_Preacher_Curls", "hack-squat": "Hack_Squat", "barbell-squat": "Barbell_Squat", "smith-machine-squat": "Smith_Machine_Squat", "leg-press": "Leg_Press", "split-squat-with-dumbbells": "Split_Squat_with_Dumbbells", "dumbbell-lunges": "Dumbbell_Lunges", "leg-extensions": "Leg_Extensions", "single-leg-leg-extension": "Single-Leg_Leg_Extension", "seated-leg-curl": "Seated_Leg_Curl", "lying-leg-curls": "Lying_Leg_Curls", "standing-leg-curl": "Standing_Leg_Curl", "stiff-legged-dumbbell-deadlift": "Stiff-Legged_Dumbbell_Deadlift", "romanian-deadlift": "Romanian_Deadlift", "stiff-legged-barbell-deadlift": "Stiff-Legged_Barbell_Deadlift", "barbell-hip-thrust": "Barbell_Hip_Thrust", "barbell-glute-bridge": "Barbell_Glute_Bridge", "thigh-abductor": "Thigh_Abductor", "standing-calf-raises": "Standing_Calf_Raises", "calf-press-on-the-leg-press-machine": "Calf_Press_On_The_Leg_Press_Machine", "seated-calf-raise": "Seated_Calf_Raise", "ab-crunch-machine": "Ab_Crunch_Machine", "cable-crunch": "Cable_Crunch", "hanging-leg-raise": "Hanging_Leg_Raise"};
 const CDN_BASE = 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/';
 document.addEventListener('error', ev => {
   const img = ev.target;
@@ -801,7 +1392,7 @@ function renderEvo(){
   const d28 = new Date(now - 28*864e5).toISOString().slice(0,10);
   const last28 = state.sessions.filter(s => s.date >= d28).length, freq = Math.min(100, Math.round(last28/20*100));
   let h = `<div class="pagehead"><div><small>DISCIPLINA GERA RESULTADO</small><h2>Evolução</h2></div><span class="badge">META 92 KG</span></div>
-    <div class="seg">${[['resumo','Resumo'],['medidas','Medidas'],['cargas','Cargas']].map(([k,v]) => `<button data-evo="${k}" class="${evoTab===k?'on':''}">${v}</button>`).join('')}</div>`;
+    <div class="seg seg5">${[['resumo','Resumo'],['checkin','Check-in'],['analise','Análise'],['medidas','Medidas'],['cargas','Cargas']].map(([k,v]) => `<button data-evo="${k}" class="${evoTab===k?'on':''}">${v}</button>`).join('')}</div>`;
   if(evoTab === 'resumo'){
     const delta = cur && prev ? num(cur.weight) - num(prev.weight) : null;
     const pct = cur ? Math.max(0, Math.min(100, (num(cur.weight)/92)*100)) : 0;
@@ -814,6 +1405,8 @@ function renderEvo(){
       ${lineChart(weights.slice(-16).map(m => ({label:brShort(m.date), y:num(m.weight)})), {unit:' kg', goal:92})}</div>
       <div class="card"><h3>Últimos treinos</h3>${sortedSessions().slice(0,5).map(s => `<div class="row" style="padding:7px 0;border-bottom:1px solid var(--line)"><span>${br(s.date)} · ${esc(s.planName)}</span><small>${Math.round(volume(s)).toLocaleString('pt-BR')} kg</small></div>`).join('') || '<p class="muted">Nenhum ainda.</p>'}</div>`;
   }
+  if(evoTab === 'checkin') h += renderCheckinTab();
+  if(evoTab === 'analise') h += renderAnaliseTab();
   if(evoTab === 'medidas'){
     const F = [['weight','Peso (kg)'],['waist','Cintura (cm)'],['chest','Peito (cm)'],['arm','Braço (cm)'],['thigh','Coxa (cm)'],['calf','Panturrilha (cm)']];
     h += `<div class="card"><h3>Nova medição</h3><form id="mform"><label>Data</label><input type="date" name="date" value="${today()}" required>
@@ -834,6 +1427,7 @@ function renderEvo(){
     h += `</div>`;
   }
   $('evo').innerHTML = h;
+  wireEvoExtra();
   $('evo').querySelectorAll('[data-evo]').forEach(b => b.onclick = () => { evoTab = b.dataset.evo; renderEvo(); });
   if($('evoex')) $('evoex').onchange = e => { state.settings.evoEx = e.target.value; persist(); renderEvo(); };
   if($('mform')) $('mform').onsubmit = e => {
@@ -864,6 +1458,8 @@ function renderCloud(){
     <label>Chave pública (anon / publishable)</label><input id="key" value="${esc(cfg.key||'')}">
     <button class="btn-g w100" id="config" style="margin-top:10px">Salvar configuração</button>
     <p class="muted" style="font-size:12px">Use apenas a chave pública. Nunca cole a chave <b>service_role</b> aqui.</p></details></div>
+  <div class="card"><h3>✦ Análise por IA</h3><p class="muted" style="font-size:13px">Usa a função <b>forca92-analyze</b> do seu Supabase (veja o guia GUIA_IA.txt). As fotos são enviadas para análise só quando você toca em "Analisar com IA".</p>
+    <button class="btn-g w100" id="aitest" ${uid?'':'disabled'}>Testar conexão com a IA</button></div>
   <div class="card"><h3>Backup</h3><p class="muted" style="font-size:13px">Exporte de vez em quando — é a sua garantia independente da nuvem.</p>
     <button class="btn-y w100" id="export">Exportar backup (JSON)</button>
     <label>Importar backup (mescla, não apaga nada)</label><input type="file" id="import" accept=".json,application/json"></div>
@@ -889,6 +1485,7 @@ function renderCloud(){
   if($('syncnow')) $('syncnow').onclick = async () => { await pull(); toast('Sincronização concluída.'); };
   if($('legacy')) $('legacy').onclick = migrateLegacyPhotos;
   $('export').onclick = exportJSON;
+  $('aitest') && ($('aitest').onclick = testAI);
   $('import').onchange = async e => {
     const f = e.target.files[0]; if(!f) return;
     try{
@@ -943,7 +1540,7 @@ async function pull(){
     if(JSON.stringify(state) !== before) afterRemoteChange();
   }catch(e){ setStatus('Erro na nuvem: '+e.message, 'err'); syncBusy = false; return; }
   syncBusy = false;
-  await uploadPending(); await downloadPhotos();
+  await uploadPending(); await uploadCheckinPending(); await downloadPhotos();
   if(dirty) await push(); else setStatus('Nuvem sincronizada ✓', 'ok');
 }
 function afterRemoteChange(){
@@ -972,6 +1569,501 @@ async function push(){
   finally{ syncBusy = false; if(dirty && navigator.onLine){ clearTimeout(debounce); debounce = setTimeout(push, 6000); } }
 }
 
+
+/* =====================================================================
+   CHECK-IN SEMANAL • ANÁLISE • PROPOSTA DE FICHA
+   ===================================================================== */
+const POSES = [
+  ['front','Frente','Corpo inteiro de frente. Braços relaxados ao lado do corpo, pés na largura do quadril.'],
+  ['back','Costas','Corpo inteiro de costas, mesma posição da foto de frente.'],
+  ['right','Perfil direito','Corpo inteiro de lado, lado direito virado para a câmera. Braços relaxados.'],
+  ['left','Perfil esquerdo','Corpo inteiro de lado, lado esquerdo virado para a câmera.'],
+  ['biceps','Bíceps de frente','De frente, duplo bíceps contraído (braços para cima, cotovelos na altura dos ombros).'],
+  ['lats','Costas abertas','De costas, dorsal aberta: mãos na cintura e cotovelos à frente, abrindo as costas.'],
+  ['legsf','Pernas de frente','Da cintura para baixo, de frente, quadríceps contraído.'],
+  ['legsb','Pernas de costas','Da cintura para baixo, de costas, na ponta dos pés contraindo as panturrilhas.']
+];
+const POSE_NAME = Object.fromEntries(POSES.map(p => [p[0], p[1]]));
+const MUSCLES = ['Peito','Costas','Ombros','Bíceps','Tríceps','Quadríceps','Posteriores','Glúteos','Panturrilha','Abdômen'];
+const AI_FUNCTION = 'forca92-analyze';
+
+const ckSorted = () => [...state.checkins].sort((a,b) => String(a.date).localeCompare(String(b.date)) || stamp(a.createdAt) - stamp(b.createdAt));
+const lastCheckin = () => ckSorted().at(-1) || null;
+const daysBetween = (a,b) => Math.round((Date.parse(b) - Date.parse(a)) / 864e5);
+const checkinDue = () => { const l = lastCheckin(); return !l || daysBetween(l.date, today()) >= 7; };
+
+/* ---------- fotos dos check-ins (aparelho + nuvem) ---------- */
+const ckKey = (id,pose) => `ck::${id}::${pose}`;
+const ckPath = (id,pose) => `${uid}/checkins/${id}/${pose}.jpg`;
+const ckCache = new Map();
+async function getCkPhoto(id, pose){
+  const k = ckKey(id,pose);
+  if(ckCache.get(k)) return ckCache.get(k);
+  const v = await idbGet(k);
+  if(v){ const d = typeof v === 'string' ? v : v.data; ckCache.set(k, d); return d; }
+  const ck = state.checkins.find(c => c.id === id), meta = ck?.photos?.[pose];
+  if(meta?.path && client && uid){
+    const {data, error} = await client.storage.from(BUCKET).download(meta.path);
+    if(!error && data){ const d = await blobToData(data); await idbPut(k, {data:d, updatedAt:stamp(meta.updatedAt)}); ckCache.set(k, d); return d; }
+  }
+  return null;
+}
+async function fillCkPhotos(scope){
+  for(const img of scope.querySelectorAll('img[data-ck]')){
+    const d = await getCkPhoto(img.dataset.ck, img.dataset.pose);
+    if(d){ img.src = d; img.closest('.ph')?.classList.remove('empty'); }
+    else img.closest('.ph')?.classList.add('empty');
+  }
+}
+
+/* fila de envio genérica: fotos de aparelho (nome) e fotos de check-in ({k,p}) */
+function queueUpload(item){ const l = pendingList(); l.push(item); setPending(l); }
+const setPendingRaw = l => localStorage.setItem(PENDING_KEY, JSON.stringify(l));
+async function uploadCheckinPending(){
+  if(!client || !uid) return false;
+  let changed = false;
+  const list = pendingList(), keep = [];
+  for(const it of list){
+    if(typeof it === 'string'){ keep.push(it); continue; }      // foto de aparelho: tratada por uploadPending()
+    const v = await idbGet(it.k);
+    if(!v){ continue; }
+    const path = `${uid}/${it.p}`;
+    const {error} = await client.storage.from(BUCKET).upload(path, dataToBlob(typeof v === 'string' ? v : v.data), {upsert:true, contentType:'image/jpeg', cacheControl:'3600'});
+    if(error){ keep.push(it); setStatus('Fotos pendentes: '+error.message, 'err'); continue; }
+    const ck = state.checkins.find(c => c.id === it.id);
+    if(ck){ ck.photos[it.pose] = {path, updatedAt:(typeof v === 'object' && v.updatedAt) || Date.now()}; ck.updatedAt = new Date().toISOString(); changed = true; }
+  }
+  setPendingRaw(keep);
+  if(changed) save();
+  return changed;
+}
+
+/* ---------- câmera guiada ---------- */
+let cam = null;   // {ck, idx, stream, facing, timer, shot, ghostOpacity}
+function openCheckin(){
+  const prev = lastCheckin();
+  cam = { ck:{id:uuid(), date:today(), createdAt:new Date().toISOString(), photos:{}, ai:null}, prev, idx:0, stream:null, facing:'environment', timer:10, shot:null, opacity:.35, taken:{} };
+  $('cam').classList.remove('hidden'); document.body.style.overflow = 'hidden';
+  camPose();
+  startStream();
+}
+function closeCam(force){
+  if(!cam) return;
+  if(!force && Object.keys(cam.taken).length && !confirm('Sair do check-in? As fotos tiradas agora serão descartadas.')) return;
+  if(!force) for(const pose of Object.keys(cam.taken)) idbDel(ckKey(cam.ck.id, pose));
+  stopStream(); clearInterval(cam.countInt);
+  cam = null; $('cam').classList.add('hidden'); document.body.style.overflow = '';
+}
+async function startStream(){
+  stopStream();
+  const v = $('camVideo');
+  if(!navigator.mediaDevices?.getUserMedia){ camNoLive('Este navegador não libera a câmera ao vivo. Use "Galeria / câmera".'); return; }
+  try{
+    cam.stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:cam.facing, width:{ideal:1920}, height:{ideal:1440}}, audio:false});
+    v.srcObject = cam.stream; await v.play().catch(()=>{});
+    v.classList.toggle('mirror', cam.facing === 'user'); $('camGhost').classList.toggle('mirror', cam.facing === 'user');
+    v.classList.remove('hidden'); $('camLive').classList.remove('hidden'); $('camNoLive').classList.add('hidden');
+  }catch(e){ camNoLive('Câmera não liberada ('+e.name+'). Permita o acesso à câmera ou use "Galeria / câmera".'); }
+}
+function camNoLive(msg){ $('camVideo').classList.add('hidden'); $('camNoLive').textContent = msg; $('camNoLive').classList.remove('hidden'); }
+function stopStream(){ cam?.stream?.getTracks().forEach(t => t.stop()); if(cam) cam.stream = null; }
+async function camPose(){
+  const [pose, name, hint] = POSES[cam.idx];
+  $('camPose').textContent = name; $('camStep').textContent = `${cam.idx+1} de ${POSES.length}`;
+  $('camHint').textContent = hint;
+  $('camDots').innerHTML = POSES.map((p,i) => `<i class="${i===cam.idx?'on':''} ${cam.taken[p[0]]?'ok':''}"></i>`).join('');
+  cam.shot = cam.taken[pose] || null;
+  showShot();
+  const g = $('camGhost'); g.classList.add('hidden'); g.removeAttribute('src');
+  if(cam.prev){ const d = await getCkPhoto(cam.prev.id, pose); if(d && cam && POSES[cam.idx][0] === pose){ g.src = d; g.style.opacity = cam.opacity; g.classList.remove('hidden'); } }
+  $('camGhostCtl').classList.toggle('hidden', !cam.prev);
+}
+function showShot(){
+  const has = !!cam.shot;
+  $('camShot').classList.toggle('hidden', !has); if(has) $('camShot').src = cam.shot;
+  $('camBtnsLive').classList.toggle('hidden', has); $('camBtnsShot').classList.toggle('hidden', !has);
+}
+function shoot(){
+  const v = $('camVideo');
+  if(!cam.stream || !v.videoWidth) return toast('Câmera não está pronta. Use "Galeria / câmera".');
+  const go = () => {
+    const sc = Math.min(1, 1280/Math.max(v.videoWidth, v.videoHeight)), c = document.createElement('canvas');
+    c.width = Math.round(v.videoWidth*sc); c.height = Math.round(v.videoHeight*sc);
+    c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+    cam.shot = c.toDataURL('image/jpeg', .82); showShot();
+    try{ navigator.vibrate && navigator.vibrate(60); }catch(e){}
+  };
+  if(!cam.timer) return go();
+  let n = cam.timer; const cd = $('camCount'); cd.textContent = n; cd.classList.remove('hidden');
+  clearInterval(cam.countInt);
+  cam.countInt = setInterval(() => { n--; if(n <= 0){ clearInterval(cam.countInt); cd.classList.add('hidden'); go(); } else { cd.textContent = n; if(n <= 3) beep(); } }, 1000);
+}
+function fromGallery(){
+  const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
+  inp.onchange = async () => { const f = inp.files[0]; if(!f) return; try{ cam.shot = await compress(f, 1280, .82); showShot(); }catch(e){ toast('Não foi possível usar a foto: '+e.message); } };
+  inp.click();
+}
+async function acceptShot(){
+  const pose = POSES[cam.idx][0];
+  await idbPut(ckKey(cam.ck.id, pose), {data:cam.shot, updatedAt:Date.now()});
+  ckCache.set(ckKey(cam.ck.id, pose), cam.shot);
+  cam.taken[pose] = cam.shot;
+  nextPose();
+}
+function nextPose(){
+  if(cam.idx < POSES.length-1){ cam.idx++; camPose(); }
+  else camMeasures();
+}
+function camMeasures(){
+  stopStream();
+  const n = Object.keys(cam.taken).length;
+  const last = [...state.measurements].sort((a,b) => String(a.date).localeCompare(String(b.date))).at(-1) || {};
+  const F = [['weight','Peso (kg)'],['waist','Cintura (cm)'],['chest','Peito (cm)'],['arm','Braço (cm)'],['thigh','Coxa (cm)'],['calf','Panturrilha (cm)']];
+  $('camLive').classList.add('hidden'); $('camNoLive').classList.add('hidden'); $('camShot').classList.add('hidden');
+  $('camBtnsLive').classList.add('hidden'); $('camBtnsShot').classList.add('hidden'); $('camGhostCtl').classList.add('hidden');
+  $('camPose').textContent = 'Medidas da semana'; $('camStep').textContent = `${n} foto(s)`; $('camHint').textContent = 'Meça de manhã, em jejum, sempre no mesmo ponto do corpo.';
+  $('camForm').innerHTML = `<label>Data</label><input type="date" id="ckDate" value="${cam.ck.date}">
+    <div class="grid2">${F.map(([k,v]) => `<div><label>${v}</label><input inputmode="decimal" id="ck_${k}" placeholder="${last[k]!=null ? fmtKg(last[k]) : ''}"></div>`).join('')}</div>
+    <button class="btn-y big" id="ckFinish">✓ Concluir check-in</button>
+    <button class="btn-sm w100" style="background:none;color:var(--mut);margin-top:6px" id="ckBack">← voltar para as fotos</button>`;
+  $('camForm').classList.remove('hidden');
+  $('ckBack').onclick = () => { $('camForm').classList.add('hidden'); cam.idx = POSES.length-1; $('camLive').classList.remove('hidden'); startStream(); camPose(); };
+  $('ckFinish').onclick = finishCheckin;
+}
+function finishCheckin(){
+  const ck = cam.ck; ck.date = $('ckDate').value || today();
+  const m = {id:uuid(), date:ck.date, checkinId:ck.id, updatedAt:new Date().toISOString()}; let any = false;
+  for(const k of ['weight','waist','chest','arm','thigh','calf']){ const v = $('ck_'+k).value; m[k] = filled(v) ? num(v) : null; if(m[k] != null) any = true; }
+  if(!Object.keys(cam.taken).length && !any) return toast('Tire ao menos uma foto ou preencha uma medida.');
+  if(any){ state.measurements.push(m); ck.measurementId = m.id; }
+  for(const pose of Object.keys(cam.taken)){ ck.photos[pose] = {path:null, updatedAt:Date.now()}; queueUpload({k:ckKey(ck.id,pose), p:`checkins/${ck.id}/${pose}.jpg`, id:ck.id, pose}); }
+  ck.updatedAt = new Date().toISOString();
+  state.checkins.push(ck); save();
+  closeCam(true);
+  uploadCheckinPending();
+  tab = 'evo'; evoTab = 'checkin'; ckOpen = ck.id; render(); window.scrollTo({top:0});
+  toast(client && uid ? 'Check-in salvo. Fotos enviando para a nuvem…' : 'Check-in salvo no aparelho. Entre na nuvem para sincronizar e usar a IA.', 4000);
+}
+function wireCam(){
+  $('camClose').onclick = () => closeCam(false);
+  $('camShoot').onclick = shoot;
+  $('camGallery').onclick = fromGallery;
+  $('camGallery2').onclick = fromGallery;
+  $('camFlip').onclick = () => { cam.facing = cam.facing === 'user' ? 'environment' : 'user'; startStream(); };
+  $('camTimer').onclick = () => { cam.timer = cam.timer === 10 ? 0 : cam.timer === 0 ? 5 : 10; $('camTimer').textContent = cam.timer ? `⏱ ${cam.timer}s` : '⏱ off'; };
+  $('camSkip').onclick = nextPose; $('camSkip2').onclick = () => { delete cam.taken[POSES[cam.idx][0]]; cam.shot = null; nextPose(); };
+  $('camRetake').onclick = () => { cam.shot = null; showShot(); };
+  $('camUse').onclick = acceptShot;
+  $('camOpacity').oninput = e => { cam.opacity = +e.target.value; $('camGhost').style.opacity = cam.opacity; };
+}
+
+/* ---------- análise por números ---------- */
+const e1rm = s => num(s.kg) * (1 + num(s.reps)/30);
+function exposures(name){
+  return [...state.sessions].sort((a,b) => String(a.date).localeCompare(String(b.date)) || stamp(a.finishedAt) - stamp(b.finishedAt))
+    .map(s => { const e = (s.ex||[]).find(x => x.name === name); const done = e ? e.sets.filter(x => x.done && filled(x.kg) && num(x.reps)) : []; return done.length ? {date:s.date, best:Math.max(...done.map(e1rm))} : null; })
+    .filter(Boolean);
+}
+function exStatus(name){
+  const ex = exposures(name);
+  if(ex.length < 4) return {status:'novo', n:ex.length};
+  const prevBest = Math.max(...ex.slice(0,-3).map(x => x.best)), recentBest = Math.max(...ex.slice(-3).map(x => x.best));
+  const change = prevBest ? (recentBest/prevBest - 1) : 0;
+  return {status: change > .01 ? 'progredindo' : change < -.05 ? 'regredindo' : 'platô', n:ex.length, change};
+}
+function regression(pts){ // pts: [{t:dias, y}]
+  const n = pts.length, mx = pts.reduce((a,p)=>a+p.t,0)/n, my = pts.reduce((a,p)=>a+p.y,0)/n;
+  const num_ = pts.reduce((a,p)=>a+(p.t-mx)*(p.y-my),0), den = pts.reduce((a,p)=>a+(p.t-mx)**2,0);
+  return den ? num_/den : 0;
+}
+function measureDelta(field, days){
+  const ms = state.measurements.filter(m => m[field] != null && m[field] !== '').sort((a,b) => String(a.date).localeCompare(String(b.date)));
+  if(ms.length < 2) return null;
+  const last = ms.at(-1), cut = new Date(Date.parse(last.date) - days*864e5).toISOString().slice(0,10);
+  const base = [...ms].reverse().find(m => m.date <= cut) || ms[0];
+  if(base === last) return null;
+  return {delta:num(last[field]) - num(base[field]), days:daysBetween(base.date, last.date), from:base.date, to:last.date};
+}
+function planStart(){
+  if(state.planStartedAt) return state.planStartedAt;
+  const ph = (state.planHistory||[]).map(p => String(p.date).slice(0,10)).sort().at(-1);
+  const first = [...state.sessions].map(s => s.date).sort()[0];
+  return ph && first ? (ph > first ? ph : first) : (ph || first || today());
+}
+function analysis(){
+  const r = {reasons:[], good:[], warn:[], priorities:new Set()};
+  // peso
+  const ws = state.measurements.filter(m => m.weight != null && m.weight !== '').sort((a,b) => String(a.date).localeCompare(String(b.date)));
+  const bw = ws.length ? num(ws.at(-1).weight) : null;
+  const recentW = ws.filter(m => daysBetween(m.date, today()) <= 42);
+  if(recentW.length >= 2 && daysBetween(recentW[0].date, recentW.at(-1).date) >= 10){
+    const t0 = Date.parse(recentW[0].date);
+    r.rate = regression(recentW.map(m => ({t:(Date.parse(m.date)-t0)/864e5, y:num(m.weight)}))) * 7;
+    const lo = bw*.0025, hi = bw*.005;
+    r.rateLo = lo; r.rateHi = hi;
+    if(r.rate < lo*0.4) r.warn.push(`Peso quase parado (${fmtKg(r.rate)} kg/semana). Para ganhar massa, o alvo é ${fmtKg(lo)}–${fmtKg(hi)} kg/semana: aumente um pouco as calorias.`);
+    else if(r.rate > hi*1.5) r.warn.push(`Peso subindo rápido (${fmtKg(r.rate)} kg/semana). Acima de ${fmtKg(hi)} kg/semana tende a vir mais gordura.`);
+    else r.good.push(`Ritmo de ganho de peso adequado: ${fmtKg(r.rate)} kg/semana (alvo ${fmtKg(lo)}–${fmtKg(hi)}).`);
+  } else r.warn.push('Registre o peso toda semana (no check-in) para medir o ritmo de ganho.');
+  // cintura x peso
+  const dW = measureDelta('weight', 28), dWaist = measureDelta('waist', 28);
+  if(dW && dWaist){
+    if(dWaist.delta > .8 && dWaist.delta > dW.delta) r.warn.push(`Cintura subiu ${fmtKg(dWaist.delta)} cm em ${dWaist.days} dias com o peso subindo ${fmtKg(dW.delta)} kg: sinal de ganho de gordura.`);
+    else if(dW.delta > 0 && dWaist.delta <= .5) r.good.push(`Peso +${fmtKg(dW.delta)} kg com cintura estável (${dWaist.delta>=0?'+':''}${fmtKg(dWaist.delta)} cm): ganho de qualidade.`);
+  }
+  for(const [f, label, mus] of [['arm','Braço',['Bíceps','Tríceps']],['thigh','Coxa',['Quadríceps']],['chest','Peito',['Peito']]]){
+    const d = measureDelta(f, 35);
+    if(!d || d.days < 21) continue;
+    if(d.delta <= .2){ r.warn.push(`${label} sem crescer em ${d.days} dias (${d.delta>=0?'+':''}${fmtKg(d.delta)} cm).`); mus.forEach(m => r.priorities.add(m)); }
+    else r.good.push(`${label} +${fmtKg(d.delta)} cm em ${d.days} dias.`);
+  }
+  // exercícios
+  const names = [...new Set(state.plans.flatMap(p => p.ex.map(e => e[0])))];
+  r.ex = names.map(n => ({name:n, ...exStatus(n)}));
+  const rated = r.ex.filter(x => x.status !== 'novo');
+  r.plateau = rated.filter(x => x.status === 'platô' || x.status === 'regredindo');
+  r.plateauPct = rated.length ? r.plateau.length / rated.length : 0;
+  if(rated.length){
+    const prog = rated.filter(x => x.status === 'progredindo').length;
+    (r.plateauPct >= .5 ? r.warn : r.good).push(`${prog} de ${rated.length} exercícios progredindo nas últimas 3 sessões; ${r.plateau.length} em platô.`);
+  }
+  const byMus = {};
+  for(const x of rated){ const m = exInfo(x.name)[4]; if(!m) continue; (byMus[m] ||= []).push(x.status); }
+  for(const [m, st] of Object.entries(byMus)) if(st.length && st.every(s => s !== 'progredindo')) r.priorities.add(m);
+  // aderência e idade da ficha
+  const d28 = new Date(Date.now() - 28*864e5).toISOString().slice(0,10);
+  r.adherence = state.sessions.filter(s => s.date >= d28).length / 20;
+  r.planWeeks = Math.floor(daysBetween(planStart(), today()) / 7);
+  if(r.adherence < .6) r.warn.push(`Frequência de ${Math.round(r.adherence*100)}% nas últimas 4 semanas. Antes de trocar a ficha, o ganho maior vem de treinar com regularidade.`);
+  // IA
+  const ai = [...state.checkins].filter(c => c.ai?.result).sort((a,b) => String(a.date).localeCompare(String(b.date))).at(-1);
+  if(ai && daysBetween(ai.date, today()) <= 21) for(const m of (ai.ai.result.grupos_prioritarios || [])) if(MUSCLES.includes(m)) r.priorities.add(m);
+  r.aiRecommends = !!(ai && daysBetween(ai.date, today()) <= 14 && ai.ai.result.recomenda_trocar_ficha);
+  // veredito
+  if(r.adherence >= .6 && (r.plateauPct >= .5 || r.planWeeks >= 8 || (r.aiRecommends && r.planWeeks >= 4))){
+    r.verdict = 'trocar';
+    if(r.plateauPct >= .5) r.reasons.push(`${Math.round(r.plateauPct*100)}% dos exercícios sem progresso`);
+    if(r.planWeeks >= 8) r.reasons.push(`ficha atual com ${r.planWeeks} semanas`);
+    if(r.aiRecommends) r.reasons.push('a análise das fotos indicou troca');
+  } else if(r.adherence >= .6 && (r.plateauPct >= .3 || r.planWeeks >= 6)) r.verdict = 'atencao';
+  else if(!rated.length) r.verdict = 'dados';
+  else r.verdict = 'ok';
+  r.priorities = [...r.priorities];
+  return r;
+}
+
+/* ---------- proposta de nova ficha ---------- */
+function generatePlan(priorities){
+  const A = analysis(), status = Object.fromEntries(A.ex.map(x => [x.name, x.status]));
+  const nextBlock = (state.planBlock || 'A') === 'A' ? 'B' : 'A';
+  const prevPlans = (state.planHistory || []).at(-1)?.plans || [];
+  const prevNames = new Set(prevPlans.flatMap(p => p.ex.map(e => e[0])));
+  const out = state.plans.map(p => ({name:p.name, ex:[]}));
+  const changes = [], useCount = {};
+  const rangeFor = (name, oldMin, oldMax) => {
+    const info = EX[name], mus = info?.[4], kind = info?.[5];
+    if(mus === 'Abdômen') return [12,15];
+    if(mus === 'Panturrilha') return nextBlock === 'A' ? [10,15] : [12,20];
+    if(kind === 'c') return nextBlock === 'A' ? [6,10] : [8,12];
+    return nextBlock === 'A' ? [10,12] : [12,15];
+  };
+  state.plans.forEach((p, d) => {
+    p.ex.forEach(([name, sets, min, max]) => {
+      const info = EX[name]; let to = name, why = [];
+      const st = status[name];
+      const swap = info && (st === 'platô' || st === 'regredindo' || (A.planWeeks >= 8 && info[5] === 'i'));
+      if(swap){
+        const dayNames = new Set([...out[d].ex.map(e => e[0]), ...p.ex.map(e => e[0])]);
+        const stuck = n => status[n] === 'platô' || status[n] === 'regredindo';
+        const cands = Object.keys(EX).filter(n => EX[n][3] === info[3] && n !== name && !dayNames.has(n))
+          .sort((a,b) => (stuck(a)?1:0) - (stuck(b)?1:0) || (useCount[a]||0) - (useCount[b]||0) || (prevNames.has(a)?1:0) - (prevNames.has(b)?1:0));
+        if(cands.length){ to = cands[0]; why.push(st === 'platô' ? 'platô: troca de variação' : st === 'regredindo' ? 'carga caindo: troca de variação' : 'variação após 8 semanas'); }
+      }
+      useCount[to] = (useCount[to]||0) + 1;
+      const mus = EX[to]?.[4];
+      let s = sets;
+      if(mus && priorities.includes(mus) && s < 4){ s++; why.push('+1 série (prioridade)'); }
+      const [nmin, nmax] = rangeFor(to, min, max);
+      out[d].ex.push([to, s, nmin, nmax]);
+      changes.push({day:d, from:name, to, sets:s, oldSets:sets, range:[nmin,nmax], oldRange:[min,max], why});
+    });
+  });
+  // volume semanal por músculo: 10–20 séries (abdômen/panturrilha: 6–16)
+  const vol = () => { const v = Object.fromEntries(MUSCLES.map(m => [m,0])); out.forEach(p => p.ex.forEach(([n,s]) => { const m = EX[n]?.[4]; if(m) v[m] += s; })); return v; };
+  let v = vol();
+  for(const m of MUSCLES){
+    const [lo, hi] = m === 'Glúteos' || m === 'Abdômen' ? [4,16] : m === 'Panturrilha' ? [6,16] : [10,20];
+    let guard = 0;
+    while(v[m] < lo && guard++ < 10){
+      let added = false;
+      for(const [d,p] of out.entries()) for(const [i,e] of p.ex.entries()) if(!added && EX[e[0]]?.[4] === m && e[1] < 4){ e[1]++; added = true; const c = changes.filter(c => c.day === d)[i]; c.sets = e[1]; c.why.push(`+1 série (${m} abaixo de ${lo}/semana)`); }
+      if(!added) break; v = vol();
+    }
+    guard = 0;
+    while(v[m] > hi && guard++ < 10){
+      let cut = false;
+      for(const [d,p] of out.entries()) for(const [i,e] of p.ex.entries()) if(!cut && EX[e[0]]?.[4] === m && EX[e[0]]?.[5] === 'i' && e[1] > 2){ e[1]--; cut = true; const c = changes.filter(c => c.day === d)[i]; c.sets = e[1]; c.why.push(`−1 série (${m} acima de ${hi}/semana)`); }
+      if(!cut) break; v = vol();
+    }
+  }
+  return {plans:out, changes, volume:v, block:nextBlock, analysis:A, priorities};
+}
+let proposal = null;
+function approveProposal(){
+  if(!proposal) return;
+  if(!confirm('Aprovar a nova ficha? A ficha atual fica guardada no histórico de fichas.')) return;
+  const now = new Date().toISOString();
+  state.planHistory.push({id:uuid(), date:now, reason:`Nova ficha aprovada (bloco ${proposal.block})`, plans:clone(state.plans), version:state.planVersion||6});
+  state.plans = proposal.plans; state.planBlock = proposal.block; state.planStartedAt = today(); state.plansAt = now;
+  for(const k of Object.keys(state.drafts)) if(!hasData(state.drafts[k])){ delete state.drafts[k]; state.deleted.drafts[k] = Date.now(); }
+  proposal = null; save(); toast('Nova ficha ativa. Bons treinos!', 3500);
+  tab = 'train'; render(); window.scrollTo({top:0});
+}
+
+/* ---------- IA ---------- */
+async function shrink(dataUrl, max=768, q=.75){
+  return new Promise(ok => { const img = new Image(); img.onload = () => { const sc = Math.min(1, max/Math.max(img.width,img.height)), c = document.createElement('canvas'); c.width = Math.round(img.width*sc); c.height = Math.round(img.height*sc); c.getContext('2d').drawImage(img,0,0,c.width,c.height); ok(c.toDataURL('image/jpeg', q)); }; img.onerror = () => ok(null); img.src = dataUrl; });
+}
+let aiBusy = false;
+async function runAI(id){
+  if(aiBusy) return;
+  if(!client || !uid) return toast('Entre na nuvem para usar a análise por IA.');
+  const ck = state.checkins.find(c => c.id === id); if(!ck) return;
+  const all = ckSorted(), idx = all.findIndex(c => c.id === id), prev = idx > 0 ? all[idx-1] : null, first = idx > 1 ? all[0] : null;
+  aiBusy = true; renderEvo();
+  try{
+    const images = [];
+    for(const [pose, name] of POSES){ const d = await getCkPhoto(ck.id, pose); if(d) images.push({label:`ATUAL (${br(ck.date)}) — ${name}`, data:(await shrink(d)).split(',')[1]}); }
+    for(const [ref, tag] of [[prev,'ANTERIOR'],[first,'PRIMEIRO CHECK-IN']]) if(ref) for(const [pose, name] of POSES.slice(0,4)){ const d = await getCkPhoto(ref.id, pose); if(d) images.push({label:`${tag} (${br(ref.date)}) — ${name}`, data:(await shrink(d)).split(',')[1]}); }
+    if(!images.some(i => i.label.startsWith('ATUAL'))) throw new Error('Este check-in não tem fotos disponíveis neste aparelho nem na nuvem.');
+    const A = analysis();
+    const metrics = {
+      objetivo:'Hipertrofia natural, meta de 92 kg de peso corporal', data_checkin:ck.date,
+      medidas:[...state.measurements].sort((a,b) => String(a.date).localeCompare(String(b.date))).slice(-10).map(m => ({data:m.date, peso:m.weight, cintura:m.waist, peito:m.chest, braco:m.arm, coxa:m.thigh, panturrilha:m.calf})),
+      ritmo_peso_kg_semana: A.rate != null ? +A.rate.toFixed(2) : null,
+      aderencia_4_semanas_pct: Math.round(A.adherence*100), semanas_na_ficha_atual: A.planWeeks,
+      exercicios: A.ex.map(x => ({nome:x.name, musculo:exInfo(x.name)[4], status:x.status, sessoes:x.n})),
+      alertas_numericos: A.warn, pontos_positivos_numericos: A.good
+    };
+    const {data, error} = await client.functions.invoke(AI_FUNCTION, {body:{images, metrics}});
+    if(error){
+      let msg = error.message;
+      try{ const j = await error.context.json(); msg = j.error || msg; }catch(e){}
+      throw new Error(msg);
+    }
+    if(!data?.result) throw new Error(data?.error || 'resposta vazia da função');
+    ck.ai = {at:new Date().toISOString(), model:data.model, result:data.result};
+    ck.updatedAt = new Date().toISOString(); save();
+    toast('Análise concluída.');
+  }catch(e){ toast('IA: '+e.message, 6000); }
+  aiBusy = false; renderEvo();
+}
+async function testAI(){
+  if(!client || !uid) return toast('Entre na nuvem primeiro.');
+  const {data, error} = await client.functions.invoke(AI_FUNCTION, {body:{ping:true}});
+  if(error){ let msg = error.message; try{ const j = await error.context.json(); msg = j.error || msg; }catch(e){} return toast('IA não respondeu: '+msg, 7000); }
+  toast(data?.ok ? `IA pronta ✓ (${data.model})` : 'Resposta inesperada da função.', 5000);
+}
+
+/* ---------- telas: check-in, análise, proposta ---------- */
+let ckOpen = null, ckCompare = 'prev';
+function renderCheckinTab(){
+  const list = ckSorted().reverse();
+  const due = checkinDue(), last = lastCheckin();
+  let h = `<div class="card ${due?'session':''}"><div class="row"><div><h3>Check-in semanal</h3><small>${last ? `Último: ${br(last.date)} · ${daysBetween(last.date, today())} dia(s)` : 'Nenhum check-in ainda'}</small></div>
+    <span class="badge ${due?'solid':''}">${due?'PENDENTE':'EM DIA'}</span></div>
+    <p class="muted" style="font-size:13px">8 fotos guiadas + medidas. Mesmo lugar, mesma luz, de manhã e em jejum. A foto anterior aparece em transparência para você se alinhar.</p>
+    <button class="btn-y big" id="ckStart">📸 ${due?'Fazer check-in agora':'Fazer novo check-in'}</button></div>`;
+  if(!list.length){ return h + `<div class="card muted">Seus check-ins vão aparecer aqui, com comparação lado a lado e análise.</div>`; }
+  const cur = state.checkins.find(c => c.id === ckOpen) || list[0]; ckOpen = cur.id;
+  const all = ckSorted(), idx = all.findIndex(c => c.id === cur.id);
+  const ref = ckCompare === 'first' ? (idx > 0 ? all[0] : null) : ckCompare === 'prev' ? (idx > 0 ? all[idx-1] : null) : null;
+  h += `<div class="chips">${list.map(c => `<button class="chip ${c.id===cur.id?'on':''}" data-ck-open="${c.id}">${brShort(c.date)}${c.ai?.result?' ✦':''}</button>`).join('')}</div>
+    <div class="card"><div class="row"><h3>Check-in ${br(cur.date)}</h3><button class="btn-sm" style="background:none;color:var(--red)" data-ck-del="${cur.id}">excluir</button></div>
+    <div class="seg" style="grid-template-columns:repeat(3,1fr);margin-top:10px">${[['prev','vs. anterior'],['first','vs. primeiro'],['none','só este']].map(([k,v]) => `<button data-cmp="${k}" class="${ckCompare===k?'on':''}" style="font-size:12.5px">${v}</button>`).join('')}</div>
+    ${POSES.map(([pose, name]) => { if(!cur.photos?.[pose] && !(ref?.photos?.[pose])) return ''; return `<div style="margin-bottom:10px"><small style="font-weight:700;color:var(--txt)">${name}</small>
+      <div class="photos ${ref?'':'one'}" style="margin-top:4px">${ref ? `<div class="ph tall"><img data-ck="${ref.id}" data-pose="${pose}" alt=""><span>${brShort(ref.date)}</span></div>` : ''}
+      <div class="ph tall mine"><img data-ck="${cur.id}" data-pose="${pose}" alt=""><span>${brShort(cur.date)}</span></div></div></div>`; }).join('')}
+    ${ref ? '' : (idx === 0 && ckCompare !== 'none' ? '<p class="muted" style="font-size:12.5px">Este é o primeiro check-in: a comparação começa na próxima semana.</p>' : '')}
+    </div>${aiCard(cur)}`;
+  return h;
+}
+const AI_PROG = {'avançando':['up','▲ Avançando'],'estável':['','■ Estável'],'regredindo':['down','▼ Regredindo'],'inconclusivo':['','? Inconclusivo']};
+function aiCard(ck){
+  const r = ck.ai?.result;
+  let h = `<div class="card" style="border-color:#4a3f12"><div class="row"><h3>✦ Análise das fotos (IA)</h3>${r?`<span class="badge">${esc(AI_PROG[r.progresso]?.[1]||r.progresso)}</span>`:''}</div>`;
+  if(aiBusy) return h + `<p class="muted">Analisando as fotos… pode levar até 1 minuto.</p></div>`;
+  if(!r) return h + `<p class="muted" style="font-size:13px">A IA compara as fotos deste check-in com o anterior e o primeiro, junto com seus números, e aponta mudanças visíveis e músculos a priorizar. ${uid?'':'<b>Entre na nuvem para usar.</b>'}</p>
+    <button class="btn-o w100" data-ai="${ck.id}" ${uid?'':'disabled'}>Analisar com IA</button></div>`;
+  const li = a => (a||[]).length ? `<ul style="margin:6px 0 10px;padding-left:18px;line-height:1.5">${a.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '<p class="muted">—</p>';
+  return h + `<p style="line-height:1.55">${esc(r.resumo)}</p>
+    <b style="font-size:13px">Mudanças visíveis</b>${li(r.mudancas_visiveis)}
+    <b style="font-size:13px">Pontos fortes</b>${li(r.pontos_fortes)}
+    <b style="font-size:13px">Pontos a melhorar</b>${li(r.pontos_a_melhorar)}
+    ${(r.grupos_prioritarios||[]).length ? `<p style="font-size:13px"><b>Priorizar:</b> ${r.grupos_prioritarios.map(m => `<span class="badge">${esc(m)}</span>`).join(' ')}</p>` : ''}
+    <div class="note" style="margin:8px 0">${r.recomenda_trocar_ficha ? '🔁 <b>Recomenda trocar a ficha.</b> ' : '✓ <b>Manter a ficha por enquanto.</b> '}${esc(r.justificativa_troca||'')}</div>
+    ${r.qualidade_fotos ? `<p class="muted" style="font-size:12px">📷 ${esc(r.qualidade_fotos)}</p>` : ''}
+    <p class="muted" style="font-size:11px">Confiança: ${esc(r.confianca||'—')} · ${br(ck.ai.at)} · avaliação visual, não mede % de gordura.</p>
+    <button class="btn-sm w100" style="background:none;color:var(--mut)" data-ai="${ck.id}">refazer análise</button></div>`;
+}
+const STATUS_TXT = {progredindo:['up','▲ progredindo'], 'platô':['','■ platô'], regredindo:['down','▼ caindo'], novo:['','· poucos dados']};
+function renderAnaliseTab(){
+  const A = analysis();
+  const V = {trocar:['🔁 Hora de trocar a ficha', 'var(--y)'], atencao:['⚠ Atenção: progresso desacelerando', '#e0a52a'], ok:['✓ Ficha funcionando — mantenha', 'var(--ok)'], dados:['· Poucos dados ainda', 'var(--mut)']}[A.verdict];
+  let h = `<div class="card session"><h3 style="color:${V[1]}">${V[0]}</h3>
+    ${A.reasons.length ? `<p class="muted" style="font-size:13px;margin:6px 0 0">Motivo: ${A.reasons.join('; ')}.</p>` : ''}
+    <div class="grid3" style="margin-top:12px">
+      <div class="stat"><small>Ganho/semana</small><b>${A.rate!=null?fmtKg(A.rate):'—'}<i> kg</i></b><em class="muted">${A.rateLo?`alvo ${fmtKg(A.rateLo)}–${fmtKg(A.rateHi)}`:'registre o peso'}</em></div>
+      <div class="stat"><small>Frequência</small><b>${Math.round(A.adherence*100)}<i>%</i></b><em class="muted">4 semanas</em></div>
+      <div class="stat"><small>Ficha atual</small><b>${A.planWeeks}<i> sem</i></b><em class="muted">desde ${brShort(planStart())}</em></div></div></div>`;
+  if(A.good.length) h += `<div class="card"><h3 class="up">O que está indo bem</h3><ul style="padding-left:18px;line-height:1.55;margin:8px 0 0">${A.good.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>`;
+  if(A.warn.length) h += `<div class="card"><h3 style="color:#e0a52a">Pontos de atenção</h3><ul style="padding-left:18px;line-height:1.55;margin:8px 0 0">${A.warn.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>`;
+  h += `<div class="card"><h3>Progresso por exercício</h3><p class="muted" style="font-size:12px;margin:4px 0 8px">Compara a melhor série (carga × reps) das últimas 3 sessões com as anteriores.</p>
+    <table class="t">${A.ex.map(x => `<tr><td>${esc(x.name)}</td><td style="text-align:right;white-space:nowrap" class="${STATUS_TXT[x.status][0]}">${STATUS_TXT[x.status][1]}</td></tr>`).join('')}</table></div>`;
+  // proposta
+  const pri = proposal ? proposal.priorities : A.priorities;
+  h += `<div class="card" style="border-color:${A.verdict==='trocar'?'var(--y)':'var(--line)'}"><h3>Nova ficha</h3>
+    <p class="muted" style="font-size:13px">O app monta uma ficha de hipertrofia mantendo sua divisão de 5 dias: troca a variação dos exercícios em platô, alterna a faixa de repetições do bloco, ajusta o volume semanal (10–20 séries diretas por músculo grande) e dá +1 série aos músculos prioritários. Nada muda sem a sua aprovação.</p>
+    <label>Músculos prioritários</label><div class="chips" style="flex-wrap:wrap">${MUSCLES.map(m => `<button class="chip ${pri.includes(m)?'on':''}" data-pri="${m}">${m}</button>`).join('')}</div>
+    <button class="btn-${A.verdict==='trocar'?'y':'o'} w100" id="genPlan" style="margin-top:10px">${proposal?'Gerar de novo':'Gerar proposta de nova ficha'}</button>`;
+  if(proposal){
+    const P = proposal;
+    h += `<div style="margin-top:14px"><span class="badge solid">BLOCO ${P.block} · ${P.block==='A'?'compostos 6–10 reps / isolados 10–12':'compostos 8–12 reps / isolados 12–15'}</span>
+      ${P.plans.map((p,d) => `<div style="margin-top:12px"><b class="head" style="font-size:16px">D${d+1} — ${esc(p.name)}</b>
+        <table class="t">${P.changes.filter(c => c.day === d).map(c => `<tr><td>${c.from!==c.to?`<s class="muted">${esc(c.from)}</s><br><b style="color:var(--y)">${esc(c.to)}</b>`:esc(c.to)}${c.why.length?`<br><small>${esc(c.why.join(' · '))}</small>`:''}</td><td style="text-align:right;white-space:nowrap">${c.sets} × ${c.range[0]}–${c.range[1]}</td></tr>`).join('')}</table></div>`).join('')}
+      <div style="margin-top:12px"><b style="font-size:13px">Séries por semana</b><div class="grid3" style="margin-top:6px">${MUSCLES.map(m => `<div class="stat" style="padding:8px"><small>${m}</small><b style="font-size:19px">${P.volume[m]}</b></div>`).join('')}</div></div>
+      <div class="note" style="margin-top:12px">Dica: na 1ª semana da ficha nova, use cargas ~10% menores para aprender os movimentos (semana de adaptação).</div>
+      <div class="grid2"><button class="btn-g" id="dropPlan">Descartar</button><button class="btn-y" id="okPlan">Aprovar ficha</button></div></div>`;
+  }
+  h += `</div>`;
+  if((state.planHistory||[]).length) h += `<details class="how"><summary>Fichas anteriores (${state.planHistory.length})</summary>${[...state.planHistory].reverse().map(ph => `<p><b>${br(ph.date)}</b> — ${esc(ph.reason||'')}<br><small>${(ph.plans||[]).map(p => esc(p.name)).join(' · ')}</small></p>`).join('')}</details>`;
+  return h;
+}
+function wireEvoExtra(){
+  const root = $('evo');
+  $('ckStart') && ($('ckStart').onclick = openCheckin);
+  root.querySelectorAll('[data-ck-open]').forEach(b => b.onclick = () => { ckOpen = b.dataset.ckOpen; renderEvo(); });
+  root.querySelectorAll('[data-cmp]').forEach(b => b.onclick = () => { ckCompare = b.dataset.cmp; renderEvo(); });
+  root.querySelectorAll('[data-ai]').forEach(b => b.onclick = () => runAI(b.dataset.ai));
+  root.querySelectorAll('[data-ck-del]').forEach(b => b.onclick = async () => {
+    const ck = state.checkins.find(c => c.id === b.dataset.ckDel); if(!ck) return;
+    if(!confirm(`Excluir o check-in de ${br(ck.date)} e as fotos dele? Vale para todos os aparelhos.`)) return;
+    state.checkins = state.checkins.filter(c => c !== ck); state.deleted.checkins[ck.id] = Date.now(); ckOpen = null; save();
+    for(const [pose] of POSES){ idbDel(ckKey(ck.id,pose)); }
+    if(client && uid){ const paths = Object.values(ck.photos||{}).map(p => p.path).filter(Boolean); if(paths.length) client.storage.from(BUCKET).remove(paths).catch(()=>{}); }
+    renderEvo(); toast('Check-in excluído.');
+  });
+  root.querySelectorAll('[data-pri]').forEach(b => b.onclick = () => {
+    const base = proposal ? proposal.priorities : analysis().priorities;
+    const set = new Set(base); set.has(b.dataset.pri) ? set.delete(b.dataset.pri) : set.add(b.dataset.pri);
+    proposal = generatePlan([...set]); keepScroll(renderEvo);
+  });
+  $('genPlan') && ($('genPlan').onclick = () => { proposal = generatePlan(proposal ? proposal.priorities : analysis().priorities); keepScroll(renderEvo); });
+  $('dropPlan') && ($('dropPlan').onclick = () => { proposal = null; keepScroll(renderEvo); });
+  $('okPlan') && ($('okPlan').onclick = approveProposal);
+  fillCkPhotos(root);
+}
+
 /* ---------- navegação ---------- */
 function render(){
   for(const t of ['train','history','library','evo','cloud']) $(t).classList.toggle('hidden', t !== tab);
@@ -984,6 +2076,7 @@ window.addEventListener('online', () => { setStatus('Reconectado • verificando
 window.addEventListener('offline', () => setStatus('Sem internet • salvando no aparelho', 'err'));
 document.addEventListener('visibilitychange', () => { if(!document.hidden && client && uid) pull(); });
 
+wireCam();
 openPhotoDB().then(() => fillOwnPhotos(document)).catch(() => {});
 render();
 connect();
