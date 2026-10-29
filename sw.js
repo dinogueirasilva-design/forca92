@@ -1,6 +1,6 @@
 // FORÇA 92 V8 — service worker
 // App abre offline; atualiza sozinho quando há internet.
-const VERSION = 'forca92-v8.0';
+const VERSION = 'forca92-v8.0.1';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 const RUNTIME_HOSTS = ['cdn.jsdelivr.net', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 

@@ -242,7 +242,7 @@ table.t th{color:var(--mut);font-weight:600;font-size:11px}
    FORÇA 92 — V8
    Compatível com os dados da V5–V7 (mesma chave local e mesma tabela).
    ===================================================================== */
-const APP_VERSION = '8.0';
+const APP_VERSION = '8.0.1';
 const KEY = 'forca92.v5';           // mesma chave das versões anteriores: dados preservados
 const CLOUD_KEY = 'forca92.cloud';
 const PENDING_KEY = 'forca92.photoPending';
@@ -683,6 +683,21 @@ async function migrateLegacyPhotos(){
   }
   toast(n ? `${n} foto(s) antiga(s) agora sincronizam pela nuvem.` : 'Nenhuma foto antiga encontrada neste aparelho.');
 }
+
+
+/* ---------- fotos: se falhar, tenta de novo e depois busca na fonte original (CDN) ---------- */
+const CDN_IDS = {"incline-dumbbell-press": "Incline_Dumbbell_Press", "leverage-chest-press": "Leverage_Chest_Press", "butterfly": "Butterfly", "leverage-incline-chest-press": "Leverage_Incline_Chest_Press", "triceps-pushdown---rope-attachment": "Triceps_Pushdown_-_Rope_Attachment", "triceps-pushdown": "Triceps_Pushdown", "wide-grip-lat-pulldown": "Wide-Grip_Lat_Pulldown", "seated-cable-rows": "Seated_Cable_Rows", "leverage-high-row": "Leverage_High_Row", "leverage-iso-row": "Leverage_Iso_Row", "reverse-machine-flyes": "Reverse_Machine_Flyes", "one-arm-dumbbell-preacher-curl": "One_Arm_Dumbbell_Preacher_Curl", "incline-dumbbell-curl": "Incline_Dumbbell_Curl", "hammer-curls": "Hammer_Curls", "ez-bar-curl": "EZ-Bar_Curl", "hack-squat": "Hack_Squat", "leg-press": "Leg_Press", "leg-extensions": "Leg_Extensions", "seated-leg-curl": "Seated_Leg_Curl", "stiff-legged-dumbbell-deadlift": "Stiff-Legged_Dumbbell_Deadlift", "barbell-hip-thrust": "Barbell_Hip_Thrust", "leverage-shoulder-press": "Leverage_Shoulder_Press", "side-lateral-raise": "Side_Lateral_Raise", "standing-calf-raises": "Standing_Calf_Raises", "calf-press-on-the-leg-press-machine": "Calf_Press_On_The_Leg_Press_Machine", "ab-crunch-machine": "Ab_Crunch_Machine"};
+const CDN_BASE = 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/';
+document.addEventListener('error', ev => {
+  const img = ev.target;
+  if(!img || img.tagName !== 'IMG') return;
+  const m = (img.dataset.orig || img.getAttribute('src') || '').match(/images\/ex\/(.+)-(\d)\.jpg/);
+  if(!m) return;
+  img.dataset.orig ||= img.getAttribute('src').split('?')[0];
+  const tries = +(img.dataset.tries || 0); img.dataset.tries = tries + 1;
+  if(tries === 0) img.src = img.dataset.orig + '?r=' + Date.now();
+  else if(tries === 1 && CDN_IDS[m[1]]) img.src = CDN_BASE + CDN_IDS[m[1]] + '/' + m[2] + '.jpg';
+}, true);
 
 /* ---------- histórico ---------- */
 function volume(s){ return (s.ex||[]).reduce((t,e) => t + e.sets.filter(x=>x.done).reduce((a,x) => a + num(x.kg)*num(x.reps), 0), 0); }
