@@ -224,11 +224,15 @@ table.t th{color:var(--mut);font-weight:600;font-size:11px}
 .startbox{display:grid;gap:8px;margin-top:12px}
 .startbox .big{margin-top:0}
 .extra-tag{background:#1f3a24;color:var(--ok)}
+.exedit{display:flex;justify-content:space-between;gap:8px;margin-top:8px}
+.optrow{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:#1b222a;border:1px solid var(--line2);margin-top:8px;font-size:13.5px;cursor:pointer}
+.optrow input{width:22px;height:22px;accent-color:var(--y);flex:0 0 auto;padding:0}
 .addex{width:100%;padding:15px;border:1.5px dashed #6b5a14;background:transparent;color:var(--y);border-radius:14px;margin-bottom:12px;font-size:15px}
 /* folha (sheet) */
 .sheet-bg{position:fixed;inset:0;z-index:70;background:#000a;display:flex;align-items:flex-end;justify-content:center}
 .sheet{width:100%;max-width:720px;max-height:88vh;background:#12171c;border:1px solid var(--line2);border-bottom:0;border-radius:18px 18px 0 0;display:flex;flex-direction:column;padding:14px 14px calc(14px + env(safe-area-inset-bottom))}
 .sheet .grab{width:42px;height:5px;border-radius:3px;background:#3a444e;margin:0 auto 10px}
+.sheet .chips,.sheet>input,.sheet>.row,.sheet>p{flex:0 0 auto}
 .sheet .list{overflow-y:auto;flex:1;min-height:0;margin-top:8px;display:grid;gap:7px;align-content:start}
 .pick{display:flex;gap:10px;align-items:center;padding:8px;border-radius:12px;background:#171d23;border:1.5px solid var(--line);text-align:left;font-weight:500;width:100%}
 .pick img{width:64px;height:48px;border-radius:8px;object-fit:cover;background:#1d242b;flex:0 0 auto}
@@ -336,7 +340,7 @@ table.t th{color:var(--mut);font-weight:600;font-size:11px}
    FORÇA 92 — V8
    Compatível com os dados da V5–V7 (mesma chave local e mesma tabela).
    ===================================================================== */
-const APP_VERSION = '8.2';
+const APP_VERSION = '8.3';
 const KEY = 'forca92.v5';           // mesma chave das versões anteriores: dados preservados
 const CLOUD_KEY = 'forca92.cloud';
 const PENDING_KEY = 'forca92.photoPending';
@@ -353,577 +357,9 @@ const PLANS = [
 const DAY_SHORT = ['Peito','Costas','Pernas A','Superior','Pernas B'];
 
 // [grupo, execução, fotos, padrão de movimento, músculo, tipo c=composto i=isolado]
-const EX = {
-"Supino inclinado com halteres": [
-"Peito",
-"Banco inclinado 20–35°. Escápulas apoiadas; desça com controle e empurre sem bater os halteres.",
-[
-"incline-dumbbell-press-0.jpg",
-"incline-dumbbell-press-1.jpg"],
-"sup_incl",
-"Peito",
-"c"],
-"Supino inclinado na máquina": [
-"Peito",
-"Ajuste o assento para empurrar as alças à frente e para cima, sem elevar os ombros.",
-[
-"leverage-incline-chest-press-0.jpg",
-"leverage-incline-chest-press-1.jpg"],
-"sup_incl",
-"Peito",
-"c"],
-"Supino inclinado no Smith": [
-"Peito",
-"Banco a 30°; barra desce na parte alta do peito, cotovelos levemente fechados.",
-[
-"smith-machine-incline-bench-press-0.jpg",
-"smith-machine-incline-bench-press-1.jpg"],
-"sup_incl",
-"Peito",
-"c"],
-"Supino inclinado com barra": [
-"Peito",
-"Banco a 30°; pegada média, desça até a parte alta do peito e empurre sem tirar os glúteos do banco.",
-[
-"barbell-incline-bench-press---medium-grip-0.jpg",
-"barbell-incline-bench-press---medium-grip-1.jpg"],
-"sup_incl",
-"Peito",
-"c"],
-"Supino reto na máquina": [
-"Peito",
-"Ajuste o assento com as alças na altura do peito. Empurre à frente e retorne lentamente.",
-[
-"leverage-chest-press-0.jpg",
-"leverage-chest-press-1.jpg"],
-"sup_reto",
-"Peito",
-"c"],
-"Supino reto com halteres": [
-"Peito",
-"Escápulas retraídas, pés firmes; desça os halteres ao lado do peito e empurre em leve arco.",
-[
-"dumbbell-bench-press-0.jpg",
-"dumbbell-bench-press-1.jpg"],
-"sup_reto",
-"Peito",
-"c"],
-"Supino reto com barra": [
-"Peito",
-"Pegada pouco além dos ombros; barra toca o meio do peito com controle, sem quicar.",
-[
-"barbell-bench-press---medium-grip-0.jpg",
-"barbell-bench-press---medium-grip-1.jpg"],
-"sup_reto",
-"Peito",
-"c"],
-"Peck deck": [
-"Peito",
-"Ajuste o banco; mantenha cotovelos levemente flexionados e aproxime os braços sem impulso.",
-[
-"butterfly-0.jpg",
-"butterfly-1.jpg"],
-"cruc",
-"Peito",
-"i"],
-"Crossover na polia": [
-"Peito",
-"Polias altas, leve inclinação do tronco; junte as mãos à frente do corpo mantendo os cotovelos fixos.",
-[
-"cable-crossover-0.jpg",
-"cable-crossover-1.jpg"],
-"cruc",
-"Peito",
-"i"],
-"Crucifixo com halteres": [
-"Peito",
-"Banco reto; abra os braços em arco até alongar o peito, cotovelos levemente flexionados.",
-[
-"dumbbell-flyes-0.jpg",
-"dumbbell-flyes-1.jpg"],
-"cruc",
-"Peito",
-"i"],
-"Tríceps corda": [
-"Tríceps",
-"Cotovelos junto ao tronco; estenda os braços para baixo e separe a corda ao final.",
-[
-"triceps-pushdown---rope-attachment-0.jpg",
-"triceps-pushdown---rope-attachment-1.jpg"],
-"tri",
-"Tríceps",
-"i"],
-"Tríceps polia alta com barra": [
-"Tríceps",
-"Em pé, cotovelos fixos junto ao corpo, empurre a barra para baixo sem usar o tronco.",
-[
-"triceps-pushdown-0.jpg",
-"triceps-pushdown-1.jpg"],
-"tri",
-"Tríceps",
-"i"],
-"Tríceps barra V": [
-"Tríceps",
-"Cotovelos colados ao corpo; estenda totalmente e volte devagar até 90°.",
-[
-"triceps-pushdown---v-bar-attachment-0.jpg",
-"triceps-pushdown---v-bar-attachment-1.jpg"],
-"tri",
-"Tríceps",
-"i"],
-"Tríceps testa com barra W": [
-"Tríceps",
-"Deitado, cotovelos apontando para cima; desça a barra em direção à testa e estenda.",
-[
-"ez-bar-skullcrusher-0.jpg",
-"ez-bar-skullcrusher-1.jpg"],
-"tri_along",
-"Tríceps",
-"i"],
-"Tríceps francês na corda": [
-"Tríceps",
-"De costas para a polia, braços acima da cabeça; estenda os cotovelos sem abrir os braços.",
-[
-"cable-rope-overhead-triceps-extension-0.jpg",
-"cable-rope-overhead-triceps-extension-1.jpg"],
-"tri_along",
-"Tríceps",
-"i"],
-"Puxada larga pronada": [
-"Costas",
-"Segure a barra com palmas para frente; puxe em direção à parte superior do peito.",
-[
-"wide-grip-lat-pulldown-0.jpg",
-"wide-grip-lat-pulldown-1.jpg"],
-"puxada",
-"Costas",
-"c"],
-"Puxada supinada": [
-"Costas",
-"Palmas voltadas para você, pegada na largura dos ombros; puxe até o queixo levando os cotovelos para baixo.",
-[
-"underhand-cable-pulldowns-0.jpg",
-"underhand-cable-pulldowns-1.jpg"],
-"puxada",
-"Costas",
-"c"],
-"Puxada com triângulo": [
-"Costas",
-"Pegada neutra fechada; puxe até o alto do peito com o tronco levemente inclinado.",
-[
-"v-bar-pulldown-0.jpg",
-"v-bar-pulldown-1.jpg"],
-"puxada",
-"Costas",
-"c"],
-"Remada fechada neutra": [
-"Costas",
-"Segure o triângulo; puxe em direção ao abdômen sem balançar o tronco.",
-[
-"seated-cable-rows-0.jpg",
-"seated-cable-rows-1.jpg"],
-"remada",
-"Costas",
-"c"],
-"Remada posterior sentado": [
-"Costas",
-"Na máquina de remada, puxe com cotovelos levemente abertos e peito apoiado, se disponível.",
-[
-"leverage-high-row-0.jpg",
-"leverage-high-row-1.jpg"],
-"remada",
-"Costas",
-"c"],
-"Remada articulada": [
-"Costas",
-"Apoie o peito e puxe as alças com os cotovelos para trás, sem encolher os ombros.",
-[
-"leverage-iso-row-0.jpg",
-"leverage-iso-row-1.jpg"],
-"remada",
-"Costas",
-"c"],
-"Remada unilateral com halter": [
-"Costas",
-"Joelho e mão apoiados no banco; puxe o halter em direção ao quadril, coluna neutra.",
-[
-"one-arm-dumbbell-row-0.jpg",
-"one-arm-dumbbell-row-1.jpg"],
-"remada",
-"Costas",
-"c"],
-"Remada curvada com barra": [
-"Costas",
-"Tronco inclinado ~45°, coluna neutra; puxe a barra até o umbigo.",
-[
-"bent-over-barbell-row-0.jpg",
-"bent-over-barbell-row-1.jpg"],
-"remada",
-"Costas",
-"c"],
-"Remada cavalinho": [
-"Costas",
-"Peito sobre a barra, coluna neutra; puxe a pegada até o abdômen.",
-[
-"t-bar-row-with-handle-0.jpg",
-"t-bar-row-with-handle-1.jpg"],
-"remada",
-"Costas",
-"c"],
-"Borboleta invertida": [
-"Ombros",
-"Sente de frente para o encosto e abra os braços sem erguer os ombros.",
-[
-"reverse-machine-flyes-0.jpg",
-"reverse-machine-flyes-1.jpg"],
-"delt_post",
-"Ombros",
-"i"],
-"Crucifixo inverso com halteres": [
-"Ombros",
-"Tronco inclinado à frente; abra os braços lateralmente com cotovelos semiflexionados.",
-[
-"reverse-flyes-0.jpg",
-"reverse-flyes-1.jpg"],
-"delt_post",
-"Ombros",
-"i"],
-"Face pull": [
-"Ombros",
-"Corda na altura do rosto; puxe abrindo as mãos para os lados das orelhas.",
-[
-"face-pull-0.jpg",
-"face-pull-1.jpg"],
-"delt_post",
-"Ombros",
-"i"],
-"Desenvolvimento de ombros na máquina": [
-"Ombros",
-"Empurre as alças para cima sem arquear excessivamente a lombar.",
-[
-"leverage-shoulder-press-0.jpg",
-"leverage-shoulder-press-1.jpg"],
-"desenv",
-"Ombros",
-"c"],
-"Desenvolvimento com halteres": [
-"Ombros",
-"Sentado com encosto; halteres na altura das orelhas, empurre para cima sem bater.",
-[
-"dumbbell-shoulder-press-0.jpg",
-"dumbbell-shoulder-press-1.jpg"],
-"desenv",
-"Ombros",
-"c"],
-"Desenvolvimento no Smith": [
-"Ombros",
-"Sentado sob a barra; desça até a altura do queixo e empurre.",
-[
-"smith-machine-overhead-shoulder-press-0.jpg",
-"smith-machine-overhead-shoulder-press-1.jpg"],
-"desenv",
-"Ombros",
-"c"],
-"Elevação lateral com halteres": [
-"Ombros",
-"Levante os braços lateralmente até altura confortável, sem embalo.",
-[
-"side-lateral-raise-0.jpg",
-"side-lateral-raise-1.jpg"],
-"lateral",
-"Ombros",
-"i"],
-"Elevação lateral sentado": [
-"Ombros",
-"Sentado, sem impulso do tronco; eleve os halteres até a linha dos ombros.",
-[
-"seated-side-lateral-raise-0.jpg",
-"seated-side-lateral-raise-1.jpg"],
-"lateral",
-"Ombros",
-"i"],
-"Elevação lateral na polia": [
-"Ombros",
-"Polia baixa ao lado do corpo; eleve o braço até a altura do ombro com tensão constante.",
-[
-"cable-seated-lateral-raise-0.jpg",
-"cable-seated-lateral-raise-1.jpg"],
-"lateral",
-"Ombros",
-"i"],
-"Rosca Scott unilateral": [
-"Bíceps",
-"Apoie o braço no banco Scott; flexione o cotovelo sem tirar o braço do apoio.",
-[
-"one-arm-dumbbell-preacher-curl-0.jpg",
-"one-arm-dumbbell-preacher-curl-1.jpg"],
-"rosca",
-"Bíceps",
-"i"],
-"Rosca bíceps inclinado": [
-"Bíceps",
-"Sente no banco inclinado com braços atrás do tronco; flexione sem balançar.",
-[
-"incline-dumbbell-curl-0.jpg",
-"incline-dumbbell-curl-1.jpg"],
-"rosca",
-"Bíceps",
-"i"],
-"Rosca martelo": [
-"Bíceps",
-"Mantenha as palmas voltadas uma para a outra; suba sem mexer os ombros.",
-[
-"hammer-curls-0.jpg",
-"hammer-curls-1.jpg"],
-"rosca",
-"Bíceps",
-"i"],
-"Rosca direta barra EZ": [
-"Bíceps",
-"Cotovelos junto ao tronco; eleve a barra W sem impulso.",
-[
-"ez-bar-curl-0.jpg",
-"ez-bar-curl-1.jpg"],
-"rosca",
-"Bíceps",
-"i"],
-"Rosca na polia": [
-"Bíceps",
-"Em pé de frente para a polia baixa; flexione mantendo os cotovelos parados.",
-[
-"standing-biceps-cable-curl-0.jpg",
-"standing-biceps-cable-curl-1.jpg"],
-"rosca",
-"Bíceps",
-"i"],
-"Rosca concentrada": [
-"Bíceps",
-"Sentado, cotovelo apoiado na parte interna da coxa; suba e contraia no topo.",
-[
-"concentration-curls-0.jpg",
-"concentration-curls-1.jpg"],
-"rosca",
-"Bíceps",
-"i"],
-"Rosca Scott na máquina": [
-"Bíceps",
-"Braços apoiados no pad; flexione e desça devagar até quase estender.",
-[
-"machine-preacher-curls-0.jpg",
-"machine-preacher-curls-1.jpg"],
-"rosca",
-"Bíceps",
-"i"],
-"Agachamento hack ou Smith": [
-"Pernas",
-"Escolha hack ou Smith. Desça com controle até amplitude confortável e suba empurrando o chão.",
-[
-"hack-squat-0.jpg",
-"hack-squat-1.jpg"],
-"agach",
-"Quadríceps",
-"c"],
-"Agachamento livre": [
-"Pernas",
-"Barra apoiada no trapézio, pés na largura dos ombros; desça com coluna neutra e suba empurrando o chão.",
-[
-"barbell-squat-0.jpg",
-"barbell-squat-1.jpg"],
-"agach",
-"Quadríceps",
-"c"],
-"Agachamento no Smith": [
-"Pernas",
-"Pés levemente à frente da barra; desça com controle mantendo o tronco firme.",
-[
-"smith-machine-squat-0.jpg",
-"smith-machine-squat-1.jpg"],
-"agach",
-"Quadríceps",
-"c"],
-"Leg press 45°": [
-"Pernas",
-"Pés firmes na plataforma; flexione joelhos com controle sem arredondar a lombar.",
-[
-"leg-press-0.jpg",
-"leg-press-1.jpg"],
-"legpress",
-"Quadríceps",
-"c"],
-"Agachamento búlgaro": [
-"Pernas",
-"Pé de trás apoiado no banco; desça o joelho de trás em direção ao chão, tronco firme.",
-[
-"split-squat-with-dumbbells-0.jpg",
-"split-squat-with-dumbbells-1.jpg"],
-"legpress",
-"Quadríceps",
-"c"],
-"Afundo com halteres": [
-"Pernas",
-"Passo à frente e desça até os dois joelhos ficarem perto de 90°; volte empurrando com a perna da frente.",
-[
-"dumbbell-lunges-0.jpg",
-"dumbbell-lunges-1.jpg"],
-"legpress",
-"Quadríceps",
-"c"],
-"Cadeira extensora": [
-"Pernas",
-"Ajuste o eixo ao joelho; estenda as pernas sem dar trancos.",
-[
-"leg-extensions-0.jpg",
-"leg-extensions-1.jpg"],
-"extensora",
-"Quadríceps",
-"i"],
-"Cadeira extensora unilateral": [
-"Pernas",
-"Uma perna por vez, mesmo ajuste do eixo; segure 1 s no topo.",
-[
-"single-leg-leg-extension-0.jpg",
-"single-leg-leg-extension-1.jpg"],
-"extensora",
-"Quadríceps",
-"i"],
-"Flexora sentada": [
-"Pernas",
-"Alinhe o joelho ao eixo da máquina e flexione as pernas controlando a volta.",
-[
-"seated-leg-curl-0.jpg",
-"seated-leg-curl-1.jpg"],
-"flexora",
-"Posteriores",
-"i"],
-"Flexora deitada": [
-"Pernas",
-"Quadril colado no banco; flexione os joelhos sem levantar o quadril.",
-[
-"lying-leg-curls-0.jpg",
-"lying-leg-curls-1.jpg"],
-"flexora",
-"Posteriores",
-"i"],
-"Flexora em pé": [
-"Pernas",
-"Uma perna por vez, tronco apoiado; flexione o joelho com controle.",
-[
-"standing-leg-curl-0.jpg",
-"standing-leg-curl-1.jpg"],
-"flexora",
-"Posteriores",
-"i"],
-"Stiff com halteres": [
-"Pernas",
-"Quadril vai para trás; joelhos semiflexionados e coluna neutra, sem forçar amplitude.",
-[
-"stiff-legged-dumbbell-deadlift-0.jpg",
-"stiff-legged-dumbbell-deadlift-1.jpg"],
-"hinge",
-"Posteriores",
-"c"],
-"Levantamento terra romeno": [
-"Pernas",
-"Barra rente às coxas; leve o quadril para trás até alongar os posteriores e volte contraindo glúteos.",
-[
-"romanian-deadlift-0.jpg",
-"romanian-deadlift-1.jpg"],
-"hinge",
-"Posteriores",
-"c"],
-"Stiff com barra": [
-"Pernas",
-"Joelhos quase estendidos, coluna neutra; desça a barra até alongar os posteriores.",
-[
-"stiff-legged-barbell-deadlift-0.jpg",
-"stiff-legged-barbell-deadlift-1.jpg"],
-"hinge",
-"Posteriores",
-"c"],
-"Elevação pélvica na máquina": [
-"Pernas",
-"Apoie a parte superior das costas; eleve o quadril até alinhar tronco e coxas.",
-[
-"barbell-hip-thrust-0.jpg",
-"barbell-hip-thrust-1.jpg"],
-"gluteo",
-"Glúteos",
-"c"],
-"Ponte de glúteo com barra": [
-"Pernas",
-"Deitado no chão, barra sobre o quadril; eleve contraindo glúteos e segure 1 s.",
-[
-"barbell-glute-bridge-0.jpg",
-"barbell-glute-bridge-1.jpg"],
-"gluteo",
-"Glúteos",
-"c"],
-"Cadeira abdutora": [
-"Pernas",
-"Costas apoiadas; abra as pernas contra a resistência e volte devagar.",
-[
-"thigh-abductor-0.jpg",
-"thigh-abductor-1.jpg"],
-"gluteo",
-"Glúteos",
-"i"],
-"Panturrilha em pé": [
-"Panturrilha",
-"Eleve os calcanhares e desça devagar, com amplitude controlada.",
-[
-"standing-calf-raises-0.jpg",
-"standing-calf-raises-1.jpg"],
-"pant",
-"Panturrilha",
-"i"],
-"Panturrilha no leg press": [
-"Panturrilha",
-"Mantenha joelhos estáveis; movimente apenas os tornozelos na plataforma.",
-[
-"calf-press-on-the-leg-press-machine-0.jpg",
-"calf-press-on-the-leg-press-machine-1.jpg"],
-"pant",
-"Panturrilha",
-"i"],
-"Panturrilha sentado": [
-"Panturrilha",
-"Joelhos sob o apoio; desça os calcanhares ao máximo e suba até a ponta dos pés.",
-[
-"seated-calf-raise-0.jpg",
-"seated-calf-raise-1.jpg"],
-"pant",
-"Panturrilha",
-"i"],
-"Abdômen máquina": [
-"Abdômen",
-"Flexione o tronco contra a resistência, evitando puxar com os braços.",
-[
-"ab-crunch-machine-0.jpg",
-"ab-crunch-machine-1.jpg"],
-"abd",
-"Abdômen",
-"i"],
-"Abdominal na polia": [
-"Abdômen",
-"Ajoelhado, corda junto à cabeça; flexione o tronco levando os cotovelos aos joelhos.",
-[
-"cable-crunch-0.jpg",
-"cable-crunch-1.jpg"],
-"abd",
-"Abdômen",
-"i"],
-"Elevação de pernas na barra": [
-"Abdômen",
-"Pendurado na barra; eleve as pernas sem balanço, enrolando o quadril no final.",
-[
-"hanging-leg-raise-0.jpg",
-"hanging-leg-raise-1.jpg"],
-"abd",
-"Abdômen",
-"i"
-]
-};
-const GROUPS = ['Peito','Costas','Ombros','Bíceps','Tríceps','Pernas','Panturrilha','Abdômen'];
+const EX = {"Supino inclinado com halteres": ["Peito", "Banco inclinado 20–35°. Escápulas apoiadas; desça com controle e empurre sem bater os halteres.", ["incline-dumbbell-press-0.jpg", "incline-dumbbell-press-1.jpg"], "sup_incl", "Peito", "c"], "Supino inclinado na máquina": ["Peito", "Ajuste o assento para empurrar as alças à frente e para cima, sem elevar os ombros.", ["leverage-incline-chest-press-0.jpg", "leverage-incline-chest-press-1.jpg"], "sup_incl", "Peito", "c"], "Supino inclinado no Smith": ["Peito", "Banco a 30°; barra desce na parte alta do peito, cotovelos levemente fechados.", ["smith-machine-incline-bench-press-0.jpg", "smith-machine-incline-bench-press-1.jpg"], "sup_incl", "Peito", "c"], "Supino inclinado com barra": ["Peito", "Banco a 30°; pegada média, desça até a parte alta do peito e empurre sem tirar os glúteos do banco.", ["barbell-incline-bench-press---medium-grip-0.jpg", "barbell-incline-bench-press---medium-grip-1.jpg"], "sup_incl", "Peito", "c"], "Supino reto na máquina": ["Peito", "Ajuste o assento com as alças na altura do peito. Empurre à frente e retorne lentamente.", ["leverage-chest-press-0.jpg", "leverage-chest-press-1.jpg"], "sup_reto", "Peito", "c"], "Supino reto com halteres": ["Peito", "Escápulas retraídas, pés firmes; desça os halteres ao lado do peito e empurre em leve arco.", ["dumbbell-bench-press-0.jpg", "dumbbell-bench-press-1.jpg"], "sup_reto", "Peito", "c"], "Supino reto com barra": ["Peito", "Pegada pouco além dos ombros; barra toca o meio do peito com controle, sem quicar.", ["barbell-bench-press---medium-grip-0.jpg", "barbell-bench-press---medium-grip-1.jpg"], "sup_reto", "Peito", "c"], "Peck deck": ["Peito", "Ajuste o banco; mantenha cotovelos levemente flexionados e aproxime os braços sem impulso.", ["butterfly-0.jpg", "butterfly-1.jpg"], "cruc", "Peito", "i"], "Crossover na polia": ["Peito", "Polias altas, leve inclinação do tronco; junte as mãos à frente do corpo mantendo os cotovelos fixos.", ["cable-crossover-0.jpg", "cable-crossover-1.jpg"], "cruc", "Peito", "i"], "Crucifixo com halteres": ["Peito", "Banco reto; abra os braços em arco até alongar o peito, cotovelos levemente flexionados.", ["dumbbell-flyes-0.jpg", "dumbbell-flyes-1.jpg"], "cruc", "Peito", "i"], "Tríceps corda": ["Tríceps", "Cotovelos junto ao tronco; estenda os braços para baixo e separe a corda ao final.", ["triceps-pushdown---rope-attachment-0.jpg", "triceps-pushdown---rope-attachment-1.jpg"], "tri", "Tríceps", "i"], "Tríceps polia alta com barra": ["Tríceps", "Em pé, cotovelos fixos junto ao corpo, empurre a barra para baixo sem usar o tronco.", ["triceps-pushdown-0.jpg", "triceps-pushdown-1.jpg"], "tri", "Tríceps", "i"], "Tríceps barra V": ["Tríceps", "Cotovelos colados ao corpo; estenda totalmente e volte devagar até 90°.", ["triceps-pushdown---v-bar-attachment-0.jpg", "triceps-pushdown---v-bar-attachment-1.jpg"], "tri", "Tríceps", "i"], "Tríceps testa com barra W": ["Tríceps", "Deitado, cotovelos apontando para cima; desça a barra em direção à testa e estenda.", ["ez-bar-skullcrusher-0.jpg", "ez-bar-skullcrusher-1.jpg"], "tri_along", "Tríceps", "i"], "Tríceps francês na corda": ["Tríceps", "De costas para a polia, braços acima da cabeça; estenda os cotovelos sem abrir os braços.", ["cable-rope-overhead-triceps-extension-0.jpg", "cable-rope-overhead-triceps-extension-1.jpg"], "tri_along", "Tríceps", "i"], "Puxada larga pronada": ["Costas", "Segure a barra com palmas para frente; puxe em direção à parte superior do peito.", ["wide-grip-lat-pulldown-0.jpg", "wide-grip-lat-pulldown-1.jpg"], "puxada", "Costas", "c"], "Puxada supinada": ["Costas", "Palmas voltadas para você, pegada na largura dos ombros; puxe até o queixo levando os cotovelos para baixo.", ["underhand-cable-pulldowns-0.jpg", "underhand-cable-pulldowns-1.jpg"], "puxada", "Costas", "c"], "Puxada com triângulo": ["Costas", "Pegada neutra fechada; puxe até o alto do peito com o tronco levemente inclinado.", ["v-bar-pulldown-0.jpg", "v-bar-pulldown-1.jpg"], "puxada", "Costas", "c"], "Remada fechada neutra": ["Costas", "Segure o triângulo; puxe em direção ao abdômen sem balançar o tronco.", ["seated-cable-rows-0.jpg", "seated-cable-rows-1.jpg"], "remada", "Costas", "c"], "Remada posterior sentado": ["Costas", "Na máquina de remada, puxe com cotovelos levemente abertos e peito apoiado, se disponível.", ["leverage-high-row-0.jpg", "leverage-high-row-1.jpg"], "remada", "Costas", "c"], "Remada articulada": ["Costas", "Apoie o peito e puxe as alças com os cotovelos para trás, sem encolher os ombros.", ["leverage-iso-row-0.jpg", "leverage-iso-row-1.jpg"], "remada", "Costas", "c"], "Remada unilateral com halter": ["Costas", "Joelho e mão apoiados no banco; puxe o halter em direção ao quadril, coluna neutra.", ["one-arm-dumbbell-row-0.jpg", "one-arm-dumbbell-row-1.jpg"], "remada", "Costas", "c"], "Remada curvada com barra": ["Costas", "Tronco inclinado ~45°, coluna neutra; puxe a barra até o umbigo.", ["bent-over-barbell-row-0.jpg", "bent-over-barbell-row-1.jpg"], "remada", "Costas", "c"], "Remada cavalinho": ["Costas", "Peito sobre a barra, coluna neutra; puxe a pegada até o abdômen.", ["t-bar-row-with-handle-0.jpg", "t-bar-row-with-handle-1.jpg"], "remada", "Costas", "c"], "Borboleta invertida": ["Ombros", "Sente de frente para o encosto e abra os braços sem erguer os ombros.", ["reverse-machine-flyes-0.jpg", "reverse-machine-flyes-1.jpg"], "delt_post", "Ombros", "i"], "Crucifixo inverso com halteres": ["Ombros", "Tronco inclinado à frente; abra os braços lateralmente com cotovelos semiflexionados.", ["reverse-flyes-0.jpg", "reverse-flyes-1.jpg"], "delt_post", "Ombros", "i"], "Face pull": ["Ombros", "Corda na altura do rosto; puxe abrindo as mãos para os lados das orelhas.", ["face-pull-0.jpg", "face-pull-1.jpg"], "delt_post", "Ombros", "i"], "Desenvolvimento de ombros na máquina": ["Ombros", "Empurre as alças para cima sem arquear excessivamente a lombar.", ["leverage-shoulder-press-0.jpg", "leverage-shoulder-press-1.jpg"], "desenv", "Ombros", "c"], "Desenvolvimento com halteres": ["Ombros", "Sentado com encosto; halteres na altura das orelhas, empurre para cima sem bater.", ["dumbbell-shoulder-press-0.jpg", "dumbbell-shoulder-press-1.jpg"], "desenv", "Ombros", "c"], "Desenvolvimento no Smith": ["Ombros", "Sentado sob a barra; desça até a altura do queixo e empurre.", ["smith-machine-overhead-shoulder-press-0.jpg", "smith-machine-overhead-shoulder-press-1.jpg"], "desenv", "Ombros", "c"], "Elevação lateral com halteres": ["Ombros", "Levante os braços lateralmente até altura confortável, sem embalo.", ["side-lateral-raise-0.jpg", "side-lateral-raise-1.jpg"], "lateral", "Ombros", "i"], "Elevação lateral sentado": ["Ombros", "Sentado, sem impulso do tronco; eleve os halteres até a linha dos ombros.", ["seated-side-lateral-raise-0.jpg", "seated-side-lateral-raise-1.jpg"], "lateral", "Ombros", "i"], "Elevação lateral na polia": ["Ombros", "Polia baixa ao lado do corpo; eleve o braço até a altura do ombro com tensão constante.", ["cable-seated-lateral-raise-0.jpg", "cable-seated-lateral-raise-1.jpg"], "lateral", "Ombros", "i"], "Rosca Scott unilateral": ["Bíceps", "Apoie o braço no banco Scott; flexione o cotovelo sem tirar o braço do apoio.", ["one-arm-dumbbell-preacher-curl-0.jpg", "one-arm-dumbbell-preacher-curl-1.jpg"], "rosca", "Bíceps", "i"], "Rosca bíceps inclinado": ["Bíceps", "Sente no banco inclinado com braços atrás do tronco; flexione sem balançar.", ["incline-dumbbell-curl-0.jpg", "incline-dumbbell-curl-1.jpg"], "rosca", "Bíceps", "i"], "Rosca martelo": ["Bíceps", "Mantenha as palmas voltadas uma para a outra; suba sem mexer os ombros.", ["hammer-curls-0.jpg", "hammer-curls-1.jpg"], "rosca", "Bíceps", "i"], "Rosca direta barra EZ": ["Bíceps", "Cotovelos junto ao tronco; eleve a barra W sem impulso.", ["ez-bar-curl-0.jpg", "ez-bar-curl-1.jpg"], "rosca", "Bíceps", "i"], "Rosca na polia": ["Bíceps", "Em pé de frente para a polia baixa; flexione mantendo os cotovelos parados.", ["standing-biceps-cable-curl-0.jpg", "standing-biceps-cable-curl-1.jpg"], "rosca", "Bíceps", "i"], "Rosca concentrada": ["Bíceps", "Sentado, cotovelo apoiado na parte interna da coxa; suba e contraia no topo.", ["concentration-curls-0.jpg", "concentration-curls-1.jpg"], "rosca", "Bíceps", "i"], "Rosca Scott na máquina": ["Bíceps", "Braços apoiados no pad; flexione e desça devagar até quase estender.", ["machine-preacher-curls-0.jpg", "machine-preacher-curls-1.jpg"], "rosca", "Bíceps", "i"], "Agachamento hack ou Smith": ["Quadríceps", "Escolha hack ou Smith. Desça com controle até amplitude confortável e suba empurrando o chão.", ["hack-squat-0.jpg", "hack-squat-1.jpg"], "agach", "Quadríceps", "c"], "Agachamento livre": ["Quadríceps", "Barra apoiada no trapézio, pés na largura dos ombros; desça com coluna neutra e suba empurrando o chão.", ["barbell-squat-0.jpg", "barbell-squat-1.jpg"], "agach", "Quadríceps", "c"], "Agachamento no Smith": ["Quadríceps", "Pés levemente à frente da barra; desça com controle mantendo o tronco firme.", ["smith-machine-squat-0.jpg", "smith-machine-squat-1.jpg"], "agach", "Quadríceps", "c"], "Leg press 45°": ["Quadríceps", "Pés firmes na plataforma; flexione joelhos com controle sem arredondar a lombar.", ["leg-press-0.jpg", "leg-press-1.jpg"], "legpress", "Quadríceps", "c"], "Agachamento búlgaro": ["Quadríceps", "Pé de trás apoiado no banco; desça o joelho de trás em direção ao chão, tronco firme.", ["split-squat-with-dumbbells-0.jpg", "split-squat-with-dumbbells-1.jpg"], "legpress", "Quadríceps", "c"], "Afundo com halteres": ["Quadríceps", "Passo à frente e desça até os dois joelhos ficarem perto de 90°; volte empurrando com a perna da frente.", ["dumbbell-lunges-0.jpg", "dumbbell-lunges-1.jpg"], "legpress", "Quadríceps", "c"], "Cadeira extensora": ["Quadríceps", "Ajuste o eixo ao joelho; estenda as pernas sem dar trancos.", ["leg-extensions-0.jpg", "leg-extensions-1.jpg"], "extensora", "Quadríceps", "i"], "Cadeira extensora unilateral": ["Quadríceps", "Uma perna por vez, mesmo ajuste do eixo; segure 1 s no topo.", ["single-leg-leg-extension-0.jpg", "single-leg-leg-extension-1.jpg"], "extensora", "Quadríceps", "i"], "Flexora sentada": ["Posteriores", "Alinhe o joelho ao eixo da máquina e flexione as pernas controlando a volta.", ["seated-leg-curl-0.jpg", "seated-leg-curl-1.jpg"], "flexora", "Posteriores", "i"], "Flexora deitada": ["Posteriores", "Quadril colado no banco; flexione os joelhos sem levantar o quadril.", ["lying-leg-curls-0.jpg", "lying-leg-curls-1.jpg"], "flexora", "Posteriores", "i"], "Flexora em pé": ["Posteriores", "Uma perna por vez, tronco apoiado; flexione o joelho com controle.", ["standing-leg-curl-0.jpg", "standing-leg-curl-1.jpg"], "flexora", "Posteriores", "i"], "Stiff com halteres": ["Posteriores", "Quadril vai para trás; joelhos semiflexionados e coluna neutra, sem forçar amplitude.", ["stiff-legged-dumbbell-deadlift-0.jpg", "stiff-legged-dumbbell-deadlift-1.jpg"], "hinge", "Posteriores", "c"], "Levantamento terra romeno": ["Posteriores", "Barra rente às coxas; leve o quadril para trás até alongar os posteriores e volte contraindo glúteos.", ["romanian-deadlift-0.jpg", "romanian-deadlift-1.jpg"], "hinge", "Posteriores", "c"], "Stiff com barra": ["Posteriores", "Joelhos quase estendidos, coluna neutra; desça a barra até alongar os posteriores.", ["stiff-legged-barbell-deadlift-0.jpg", "stiff-legged-barbell-deadlift-1.jpg"], "hinge", "Posteriores", "c"], "Elevação pélvica na máquina": ["Glúteos", "Apoie a parte superior das costas; eleve o quadril até alinhar tronco e coxas.", ["barbell-hip-thrust-0.jpg", "barbell-hip-thrust-1.jpg"], "gluteo", "Glúteos", "c"], "Ponte de glúteo com barra": ["Glúteos", "Deitado no chão, barra sobre o quadril; eleve contraindo glúteos e segure 1 s.", ["barbell-glute-bridge-0.jpg", "barbell-glute-bridge-1.jpg"], "gluteo", "Glúteos", "c"], "Cadeira abdutora": ["Glúteos", "Costas apoiadas; abra as pernas contra a resistência e volte devagar.", ["thigh-abductor-0.jpg", "thigh-abductor-1.jpg"], "gluteo", "Glúteos", "i"], "Panturrilha em pé": ["Panturrilha", "Eleve os calcanhares e desça devagar, com amplitude controlada.", ["standing-calf-raises-0.jpg", "standing-calf-raises-1.jpg"], "pant", "Panturrilha", "i"], "Panturrilha no leg press": ["Panturrilha", "Mantenha joelhos estáveis; movimente apenas os tornozelos na plataforma.", ["calf-press-on-the-leg-press-machine-0.jpg", "calf-press-on-the-leg-press-machine-1.jpg"], "pant", "Panturrilha", "i"], "Panturrilha sentado": ["Panturrilha", "Joelhos sob o apoio; desça os calcanhares ao máximo e suba até a ponta dos pés.", ["seated-calf-raise-0.jpg", "seated-calf-raise-1.jpg"], "pant", "Panturrilha", "i"], "Abdômen máquina": ["Abdômen", "Flexione o tronco contra a resistência, evitando puxar com os braços.", ["ab-crunch-machine-0.jpg", "ab-crunch-machine-1.jpg"], "abd", "Abdômen", "i"], "Abdominal na polia": ["Abdômen", "Ajoelhado, corda junto à cabeça; flexione o tronco levando os cotovelos aos joelhos.", ["cable-crunch-0.jpg", "cable-crunch-1.jpg"], "abd", "Abdômen", "i"], "Elevação de pernas na barra": ["Abdômen", "Pendurado na barra; eleve as pernas sem balanço, enrolando o quadril no final.", ["hanging-leg-raise-0.jpg", "hanging-leg-raise-1.jpg"], "abd", "Abdômen", "i"], "Supino reto no Smith": ["Peito", "Banco reto sob a barra; desça até o meio do peito com cotovelos a ~45° do tronco e empurre.", ["smith-machine-bench-press-0.jpg", "smith-machine-bench-press-1.jpg"], "sup_reto", "Peito", "c"], "Supino na polia": ["Peito", "Polias na altura do peito, um passo à frente; empurre as alças à frente juntando as mãos.", ["cable-chest-press-0.jpg", "cable-chest-press-1.jpg"], "sup_reto", "Peito", "c"], "Supino reto com halteres pegada neutra": ["Peito", "Palmas viradas uma para a outra; desça os halteres ao lado do peito e empurre.", ["dumbbell-bench-press-with-neutral-grip-0.jpg", "dumbbell-bench-press-with-neutral-grip-1.jpg"], "sup_reto", "Peito", "c"], "Supino reto com barra pegada aberta": ["Peito", "Pegada bem mais larga que os ombros; desça controlando até o peito, sem quicar.", ["wide-grip-barbell-bench-press-0.jpg", "wide-grip-barbell-bench-press-1.jpg"], "sup_reto", "Peito", "c"], "Flexão de braço": ["Peito", "Mãos um pouco além dos ombros, corpo reto; desça o peito até perto do chão e empurre.", ["pushups-0.jpg", "pushups-1.jpg"], "sup_reto", "Peito", "c"], "Supino inclinado com halteres pegada neutra": ["Peito", "Banco a 30°, palmas viradas uma para a outra; desça até o peito e empurre para cima.", ["hammer-grip-incline-db-bench-press-0.jpg", "hammer-grip-incline-db-bench-press-1.jpg"], "sup_incl", "Peito", "c"], "Supino inclinado na polia": ["Peito", "Banco inclinado entre as polias baixas; empurre para cima e à frente.", ["incline-cable-chest-press-0.jpg", "incline-cable-chest-press-1.jpg"], "sup_incl", "Peito", "c"], "Flexão com pés elevados": ["Peito", "Pés no banco, mãos no chão; o peito superior trabalha mais. Corpo reto o tempo todo.", ["push-ups-with-feet-elevated-0.jpg", "push-ups-with-feet-elevated-1.jpg"], "sup_incl", "Peito", "c"], "Supino declinado com barra": ["Peito", "Banco declinado, pés presos; desça a barra até a parte baixa do peito e empurre.", ["decline-barbell-bench-press-0.jpg", "decline-barbell-bench-press-1.jpg"], "sup_decl", "Peito", "c"], "Supino declinado com halteres": ["Peito", "Banco declinado; desça os halteres ao lado da parte baixa do peito e empurre.", ["decline-dumbbell-bench-press-0.jpg", "decline-dumbbell-bench-press-1.jpg"], "sup_decl", "Peito", "c"], "Supino declinado na máquina": ["Peito", "Ajuste o banco; empurre as alças para frente e para baixo, sem tirar as costas do apoio.", ["leverage-decline-chest-press-0.jpg", "leverage-decline-chest-press-1.jpg"], "sup_decl", "Peito", "c"], "Supino declinado no Smith": ["Peito", "Banco declinado sob a barra guiada; desça até a parte baixa do peito.", ["smith-machine-decline-press-0.jpg", "smith-machine-decline-press-1.jpg"], "sup_decl", "Peito", "c"], "Paralelas foco peito": ["Peito", "Tronco inclinado à frente e cotovelos um pouco abertos; desça até alongar o peito.", ["dips---chest-version-0.jpg", "dips---chest-version-1.jpg"], "sup_decl", "Peito", "c"], "Crucifixo inclinado com halteres": ["Peito", "Banco a 30°; abra os braços em arco com cotovelos levemente flexionados.", ["incline-dumbbell-flyes-0.jpg", "incline-dumbbell-flyes-1.jpg"], "cruc", "Peito", "i"], "Crucifixo declinado com halteres": ["Peito", "Banco declinado; abra os braços em arco e feche sobre o peito sem bater os halteres.", ["decline-dumbbell-flyes-0.jpg", "decline-dumbbell-flyes-1.jpg"], "cruc", "Peito", "i"], "Crucifixo na polia banco reto": ["Peito", "Banco reto entre polias baixas; abra e feche os braços em arco, tensão constante.", ["flat-bench-cable-flyes-0.jpg", "flat-bench-cable-flyes-1.jpg"], "cruc", "Peito", "i"], "Crucifixo inclinado na polia": ["Peito", "Banco inclinado entre polias baixas; feche os braços acima do peito superior.", ["incline-cable-flye-0.jpg", "incline-cable-flye-1.jpg"], "cruc", "Peito", "i"], "Crossover polia baixa": ["Peito", "Polias embaixo; leve as mãos de baixo para cima até a altura do peito.", ["low-cable-crossover-0.jpg", "low-cable-crossover-1.jpg"], "cruc", "Peito", "i"], "Crossover unilateral": ["Peito", "Um braço por vez; cruze a mão à frente do corpo contraindo o peito.", ["single-arm-cable-crossover-0.jpg", "single-arm-cable-crossover-1.jpg"], "cruc", "Peito", "i"], "Pullover com halter": ["Peito", "Deitado, halter sobre o peito; leve atrás da cabeça com braços quase estendidos e volte.", ["straight-arm-dumbbell-pullover-0.jpg", "straight-arm-dumbbell-pullover-1.jpg"], "pullover", "Peito", "i"], "Barra fixa pronada": ["Costas", "Palmas para frente, pegada larga; suba até o queixo passar a barra, desça controlando.", ["pullups-0.jpg", "pullups-1.jpg"], "puxada", "Costas", "c"], "Barra fixa supinada": ["Costas", "Palmas para você, pegada na largura dos ombros; suba levando o peito à barra.", ["chin-up-0.jpg", "chin-up-1.jpg"], "puxada", "Costas", "c"], "Barra fixa assistida com elástico": ["Costas", "Elástico no joelho ou pé ajuda na subida; mesma execução da barra fixa.", ["band-assisted-pull-up-0.jpg", "band-assisted-pull-up-1.jpg"], "puxada", "Costas", "c"], "Puxada frontal pegada fechada": ["Costas", "Pegada fechada pronada; puxe até o alto do peito com cotovelos para baixo.", ["close-grip-front-lat-pulldown-0.jpg", "close-grip-front-lat-pulldown-1.jpg"], "puxada", "Costas", "c"], "Puxada unilateral": ["Costas", "Um braço por vez; puxe o cotovelo em direção ao quadril.", ["one-arm-lat-pulldown-0.jpg", "one-arm-lat-pulldown-1.jpg"], "puxada", "Costas", "c"], "Pulldown com braços estendidos": ["Costas", "Em pé, braços quase retos; leve a barra da altura da cabeça até as coxas.", ["straight-arm-pulldown-0.jpg", "straight-arm-pulldown-1.jpg"], "pullover", "Costas", "i"], "Pulldown na corda": ["Costas", "Igual ao pulldown, com corda; abra as mãos no final do movimento.", ["rope-straight-arm-pulldown-0.jpg", "rope-straight-arm-pulldown-1.jpg"], "pullover", "Costas", "i"], "Pullover com barra": ["Costas", "Deitado no banco; leve a barra atrás da cabeça com cotovelos flexionados e volte.", ["bent-arm-barbell-pullover-0.jpg", "bent-arm-barbell-pullover-1.jpg"], "pullover", "Costas", "i"], "Remada baixa unilateral na polia": ["Costas", "Sentado, um braço por vez; puxe a alça até a cintura sem girar o tronco.", ["seated-one-arm-cable-pulley-rows-0.jpg", "seated-one-arm-cable-pulley-rows-1.jpg"], "remada", "Costas", "c"], "Remada curvada com halteres": ["Costas", "Tronco inclinado, coluna neutra; puxe os halteres até a cintura.", ["bent-over-two-dumbbell-row-0.jpg", "bent-over-two-dumbbell-row-1.jpg"], "remada", "Costas", "c"], "Remada com halteres apoiado no banco": ["Costas", "Peito apoiado no banco inclinado; puxe os halteres levando os cotovelos para trás.", ["dumbbell-incline-row-0.jpg", "dumbbell-incline-row-1.jpg"], "remada", "Costas", "c"], "Remada cavalinho com apoio": ["Costas", "Peito no apoio da máquina; puxe as alças até o abdômen.", ["lying-t-bar-row-0.jpg", "lying-t-bar-row-1.jpg"], "remada", "Costas", "c"], "Remada curvada no Smith": ["Costas", "Tronco inclinado sob a barra guiada; puxe até o umbigo.", ["smith-machine-bent-over-row-0.jpg", "smith-machine-bent-over-row-1.jpg"], "remada", "Costas", "c"], "Remada curvada supinada": ["Costas", "Palmas para cima; tronco inclinado, puxe a barra até o umbigo.", ["reverse-grip-bent-over-rows-0.jpg", "reverse-grip-bent-over-rows-1.jpg"], "remada", "Costas", "c"], "Remada unilateral na barra (landmine)": ["Costas", "Barra presa num canto; puxe a ponta com uma mão até a cintura.", ["one-arm-long-bar-row-0.jpg", "one-arm-long-bar-row-1.jpg"], "remada", "Costas", "c"], "Remada invertida": ["Costas", "Pendurado sob a barra baixa, corpo reto; puxe o peito até a barra.", ["inverted-row-0.jpg", "inverted-row-1.jpg"], "remada", "Costas", "c"], "Hiperextensão lombar": ["Lombar", "No banco romano; desça o tronco e suba até alinhar com as pernas, sem jogar para trás.", ["hyperextensions-back-extensions-0.jpg", "hyperextensions-back-extensions-1.jpg"], "lombar", "Lombar", "i"], "Levantamento terra": ["Lombar", "Barra rente às canelas, coluna neutra; empurre o chão e estenda quadril e joelhos juntos.", ["barbell-deadlift-0.jpg", "barbell-deadlift-1.jpg"], "hinge", "Lombar", "c"], "Terra parcial (rack pull)": ["Lombar", "Barra apoiada na altura dos joelhos; puxe estendendo o quadril, coluna neutra.", ["rack-pulls-0.jpg", "rack-pulls-1.jpg"], "hinge", "Lombar", "c"], "Desenvolvimento Arnold": ["Ombros", "Começa com palmas para você; gire os halteres enquanto empurra para cima.", ["arnold-dumbbell-press-0.jpg", "arnold-dumbbell-press-1.jpg"], "desenv", "Ombros", "c"], "Desenvolvimento militar em pé": ["Ombros", "Barra na altura da clavícula; empurre acima da cabeça com abdômen firme.", ["standing-military-press-0.jpg", "standing-military-press-1.jpg"], "desenv", "Ombros", "c"], "Desenvolvimento na máquina guiada": ["Ombros", "Sentado; empurre as alças acima da cabeça sem arquear a lombar.", ["machine-shoulder-military-press-0.jpg", "machine-shoulder-military-press-1.jpg"], "desenv", "Ombros", "c"], "Desenvolvimento na polia": ["Ombros", "Sentado entre polias baixas; empurre as alças acima da cabeça.", ["seated-cable-shoulder-press-0.jpg", "seated-cable-shoulder-press-1.jpg"], "desenv", "Ombros", "c"], "Desenvolvimento em pé com halteres": ["Ombros", "Em pé, halteres na altura das orelhas; empurre para cima sem embalo.", ["standing-dumbbell-press-0.jpg", "standing-dumbbell-press-1.jpg"], "desenv", "Ombros", "c"], "Elevação lateral unilateral": ["Ombros", "Um braço por vez, segurando num apoio; eleve até a linha do ombro.", ["one-arm-side-laterals-0.jpg", "one-arm-side-laterals-1.jpg"], "lateral", "Ombros", "i"], "Elevação lateral na polia em pé": ["Ombros", "Polia baixa do lado oposto; eleve o braço lateralmente até o ombro.", ["standing-low-pulley-deltoid-raise-0.jpg", "standing-low-pulley-deltoid-raise-1.jpg"], "lateral", "Ombros", "i"], "Elevação lateral deitado": ["Ombros", "Deitado de lado no banco; eleve o halter até a vertical.", ["lying-one-arm-lateral-raise-0.jpg", "lying-one-arm-lateral-raise-1.jpg"], "lateral", "Ombros", "i"], "Elevação lateral inclinada": ["Ombros", "Apoiado de lado num banco inclinado; eleve o braço lateralmente.", ["one-arm-incline-lateral-raise-0.jpg", "one-arm-incline-lateral-raise-1.jpg"], "lateral", "Ombros", "i"], "Remada alta com barra": ["Ombros", "Pegada na largura dos ombros; puxe a barra até o peito com cotovelos acima das mãos.", ["upright-barbell-row-0.jpg", "upright-barbell-row-1.jpg"], "remada_alta", "Ombros", "c"], "Elevação frontal com halteres": ["Ombros", "Eleve os halteres à frente até a altura dos olhos, sem balançar.", ["front-dumbbell-raise-0.jpg", "front-dumbbell-raise-1.jpg"], "frontal", "Ombros", "i"], "Elevação frontal na polia": ["Ombros", "De costas para a polia baixa; eleve a alça à frente até o ombro.", ["front-cable-raise-0.jpg", "front-cable-raise-1.jpg"], "frontal", "Ombros", "i"], "Elevação frontal com anilha": ["Ombros", "Segure a anilha com as duas mãos e eleve à frente até os olhos.", ["front-plate-raise-0.jpg", "front-plate-raise-1.jpg"], "frontal", "Ombros", "i"], "Crucifixo inverso na polia": ["Ombros", "Polias cruzadas na altura dos ombros; abra os braços para trás.", ["cable-rear-delt-fly-0.jpg", "cable-rear-delt-fly-1.jpg"], "delt_post", "Ombros", "i"], "Crucifixo inverso sentado": ["Ombros", "Sentado, tronco inclinado sobre as coxas; abra os braços para os lados.", ["seated-bent-over-rear-delt-raise-0.jpg", "seated-bent-over-rear-delt-raise-1.jpg"], "delt_post", "Ombros", "i"], "Crucifixo inverso unilateral na polia": ["Ombros", "Tronco inclinado, polia baixa do lado oposto; abra o braço para trás e para fora.", ["bent-over-low-pulley-side-lateral-0.jpg", "bent-over-low-pulley-side-lateral-1.jpg"], "delt_post", "Ombros", "i"], "Remada na corda para deltoide posterior": ["Ombros", "Corda na altura do peito; puxe abrindo os cotovelos para os lados.", ["cable-rope-rear-delt-rows-0.jpg", "cable-rope-rear-delt-rows-1.jpg"], "delt_post", "Ombros", "i"], "Rotação externa na polia": ["Ombros", "Cotovelo colado ao corpo a 90°; gire o antebraço para fora. Carga leve.", ["external-rotation-with-cable-0.jpg", "external-rotation-with-cable-1.jpg"], "delt_post", "Ombros", "i"], "Encolhimento com barra": ["Trapézio", "Braços estendidos; suba os ombros em direção às orelhas, segure 1 s e desça.", ["barbell-shrug-0.jpg", "barbell-shrug-1.jpg"], "encolh", "Trapézio", "i"], "Encolhimento com halteres": ["Trapézio", "Halteres ao lado do corpo; suba os ombros sem girá-los.", ["dumbbell-shrug-0.jpg", "dumbbell-shrug-1.jpg"], "encolh", "Trapézio", "i"], "Encolhimento na polia": ["Trapézio", "Barra na polia baixa; encolha os ombros com tensão constante.", ["cable-shrugs-0.jpg", "cable-shrugs-1.jpg"], "encolh", "Trapézio", "i"], "Encolhimento na máquina": ["Trapézio", "Ajuste a altura; encolha os ombros e desça devagar.", ["leverage-shrug-0.jpg", "leverage-shrug-1.jpg"], "encolh", "Trapézio", "i"], "Encolhimento no Smith por trás": ["Trapézio", "Barra atrás do corpo; encolha os ombros para cima.", ["smith-machine-behind-the-back-shrug-0.jpg", "smith-machine-behind-the-back-shrug-1.jpg"], "encolh", "Trapézio", "i"], "Remada alta com halteres": ["Trapézio", "Puxe os halteres até o peito com cotovelos para cima e para fora.", ["standing-dumbbell-upright-row-0.jpg", "standing-dumbbell-upright-row-1.jpg"], "remada_alta", "Trapézio", "c"], "Remada alta na polia": ["Trapézio", "Barra na polia baixa; puxe até o peito com cotovelos altos.", ["upright-cable-row-0.jpg", "upright-cable-row-1.jpg"], "remada_alta", "Trapézio", "c"], "Remada alta no Smith": ["Trapézio", "Barra guiada; puxe até o peito sem jogar o tronco para trás.", ["smith-machine-upright-row-0.jpg", "smith-machine-upright-row-1.jpg"], "remada_alta", "Trapézio", "c"], "Rosca direta com barra reta": ["Bíceps", "Cotovelos junto ao tronco; suba a barra sem embalo e desça devagar.", ["barbell-curl-0.jpg", "barbell-curl-1.jpg"], "rosca", "Bíceps", "i"], "Rosca alternada com halteres": ["Bíceps", "Um braço de cada vez, girando a palma para cima na subida.", ["dumbbell-alternate-bicep-curl-0.jpg", "dumbbell-alternate-bicep-curl-1.jpg"], "rosca", "Bíceps", "i"], "Rosca simultânea com halteres": ["Bíceps", "Os dois braços juntos; cotovelos parados ao lado do corpo.", ["dumbbell-bicep-curl-0.jpg", "dumbbell-bicep-curl-1.jpg"], "rosca", "Bíceps", "i"], "Rosca Scott com barra": ["Bíceps", "Braços apoiados no banco Scott; desça quase até estender e suba sem tirar o braço.", ["preacher-curl-0.jpg", "preacher-curl-1.jpg"], "rosca", "Bíceps", "i"], "Rosca Scott com halteres": ["Bíceps", "No banco Scott com um halter em cada mão; desça controlando.", ["two-arm-dumbbell-preacher-curl-0.jpg", "two-arm-dumbbell-preacher-curl-1.jpg"], "rosca", "Bíceps", "i"], "Rosca Scott na polia": ["Bíceps", "Banco Scott de frente para a polia baixa; tensão o movimento todo.", ["cable-preacher-curl-0.jpg", "cable-preacher-curl-1.jpg"], "rosca", "Bíceps", "i"], "Rosca spider": ["Bíceps", "Peito apoiado no banco inclinado, braços pendurados; suba a barra contraindo.", ["spider-curl-0.jpg", "spider-curl-1.jpg"], "rosca", "Bíceps", "i"], "Rosca na máquina": ["Bíceps", "Cotovelos alinhados ao eixo da máquina; flexione e volte devagar.", ["machine-bicep-curl-0.jpg", "machine-bicep-curl-1.jpg"], "rosca", "Bíceps", "i"], "Rosca unilateral na polia": ["Bíceps", "Um braço por vez na polia baixa; cotovelo fixo ao lado do corpo.", ["standing-one-arm-cable-curl-0.jpg", "standing-one-arm-cable-curl-1.jpg"], "rosca", "Bíceps", "i"], "Rosca na polia alta (duplo bíceps)": ["Bíceps", "Entre as polias altas, braços abertos na altura dos ombros; traga as mãos às orelhas.", ["overhead-cable-curl-0.jpg", "overhead-cable-curl-1.jpg"], "rosca", "Bíceps", "i"], "Rosca arrastada (drag curl)": ["Bíceps", "Suba a barra rente ao corpo levando os cotovelos para trás.", ["drag-curl-0.jpg", "drag-curl-1.jpg"], "rosca", "Bíceps", "i"], "Rosca Zottman": ["Bíceps", "Suba com palmas para cima, gire no topo e desça com palmas para baixo.", ["zottman-curl-0.jpg", "zottman-curl-1.jpg"], "rosca", "Bíceps", "i"], "Rosca martelo na corda": ["Bíceps", "Corda na polia baixa, palmas uma para a outra; suba sem mexer os cotovelos.", ["cable-hammer-curls---rope-attachment-0.jpg", "cable-hammer-curls---rope-attachment-1.jpg"], "rosca", "Bíceps", "i"], "Rosca martelo cruzada": ["Bíceps", "Leve o halter em direção ao ombro oposto, palma virada para dentro.", ["cross-body-hammer-curl-0.jpg", "cross-body-hammer-curl-1.jpg"], "rosca", "Bíceps", "i"], "Rosca martelo inclinada": ["Bíceps", "Sentado no banco inclinado, braços pendurados; suba com pegada neutra.", ["incline-hammer-curls-0.jpg", "incline-hammer-curls-1.jpg"], "rosca", "Bíceps", "i"], "Rosca martelo alternada": ["Bíceps", "Um braço de cada vez, palma virada para o corpo.", ["alternate-hammer-curl-0.jpg", "alternate-hammer-curl-1.jpg"], "rosca", "Bíceps", "i"], "Tríceps pegada invertida": ["Tríceps", "Palmas para cima na barra; empurre para baixo com cotovelos colados.", ["reverse-grip-triceps-pushdown-0.jpg", "reverse-grip-triceps-pushdown-1.jpg"], "tri", "Tríceps", "i"], "Tríceps unilateral na polia": ["Tríceps", "Um braço por vez; estenda totalmente e volte devagar.", ["cable-one-arm-tricep-extension-0.jpg", "cable-one-arm-tricep-extension-1.jpg"], "tri", "Tríceps", "i"], "Tríceps coice com halter": ["Tríceps", "Tronco inclinado, braço colado ao corpo; estenda o cotovelo para trás.", ["tricep-dumbbell-kickback-0.jpg", "tricep-dumbbell-kickback-1.jpg"], "tri", "Tríceps", "i"], "Tríceps na máquina": ["Tríceps", "Cotovelos no apoio; estenda os braços e volte controlando.", ["machine-triceps-extension-0.jpg", "machine-triceps-extension-1.jpg"], "tri", "Tríceps", "i"], "Tríceps francês com halter": ["Tríceps", "Halter acima da cabeça com as duas mãos; desça atrás da cabeça e estenda.", ["standing-dumbbell-triceps-extension-0.jpg", "standing-dumbbell-triceps-extension-1.jpg"], "tri_along", "Tríceps", "i"], "Tríceps francês unilateral": ["Tríceps", "Um braço acima da cabeça; desça o halter atrás da cabeça e estenda.", ["standing-one-arm-dumbbell-triceps-extension-0.jpg", "standing-one-arm-dumbbell-triceps-extension-1.jpg"], "tri_along", "Tríceps", "i"], "Tríceps francês unilateral na polia": ["Tríceps", "De costas para a polia baixa; estenda o braço acima da cabeça.", ["standing-low-pulley-one-arm-triceps-extension-0.jpg", "standing-low-pulley-one-arm-triceps-extension-1.jpg"], "tri_along", "Tríceps", "i"], "Tríceps testa com halteres": ["Tríceps", "Deitado, halteres acima; desça ao lado da cabeça dobrando só os cotovelos.", ["lying-dumbbell-tricep-extension-0.jpg", "lying-dumbbell-tricep-extension-1.jpg"], "tri_along", "Tríceps", "i"], "Tríceps testa na polia": ["Tríceps", "Deitado de frente para a polia baixa; estenda os cotovelos com tensão constante.", ["cable-lying-triceps-extension-0.jpg", "cable-lying-triceps-extension-1.jpg"], "tri_along", "Tríceps", "i"], "Paralelas na máquina": ["Tríceps", "Sentado; empurre as alças para baixo até estender os braços.", ["dip-machine-0.jpg", "dip-machine-1.jpg"], "mergulho", "Tríceps", "c"], "Paralelas foco tríceps": ["Tríceps", "Tronco reto, cotovelos para trás; desça até 90° e suba.", ["dips---triceps-version-0.jpg", "dips---triceps-version-1.jpg"], "mergulho", "Tríceps", "c"], "Mergulho no banco": ["Tríceps", "Mãos no banco atrás do corpo; desça dobrando os cotovelos até 90°.", ["bench-dips-0.jpg", "bench-dips-1.jpg"], "mergulho", "Tríceps", "c"], "Supino fechado": ["Tríceps", "Pegada na largura dos ombros; desça com cotovelos junto ao corpo.", ["close-grip-barbell-bench-press-0.jpg", "close-grip-barbell-bench-press-1.jpg"], "mergulho", "Tríceps", "c"], "Supino fechado no Smith": ["Tríceps", "Barra guiada, pegada fechada; cotovelos rentes ao tronco.", ["smith-machine-close-grip-bench-press-0.jpg", "smith-machine-close-grip-bench-press-1.jpg"], "mergulho", "Tríceps", "c"], "Rosca inversa com barra": ["Antebraço", "Palmas para baixo; suba a barra com cotovelos parados.", ["reverse-barbell-curl-0.jpg", "reverse-barbell-curl-1.jpg"], "antebraco", "Antebraço", "i"], "Rosca inversa na polia": ["Antebraço", "Palmas para baixo na barra da polia baixa; flexione os cotovelos.", ["reverse-cable-curl-0.jpg", "reverse-cable-curl-1.jpg"], "antebraco", "Antebraço", "i"], "Rosca de punho com barra": ["Antebraço", "Antebraços no banco, palmas para cima; flexione só os punhos.", ["palms-up-barbell-wrist-curl-over-a-bench-0.jpg", "palms-up-barbell-wrist-curl-over-a-bench-1.jpg"], "antebraco", "Antebraço", "i"], "Rosca de punho invertida": ["Antebraço", "Antebraços no banco, palmas para baixo; estenda os punhos.", ["palms-down-wrist-curl-over-a-bench-0.jpg", "palms-down-wrist-curl-over-a-bench-1.jpg"], "antebraco", "Antebraço", "i"], "Rosca de punho com halteres": ["Antebraço", "Sentado, antebraços nas coxas; flexione os punhos com os halteres.", ["seated-dumbbell-palms-up-wrist-curl-0.jpg", "seated-dumbbell-palms-up-wrist-curl-1.jpg"], "antebraco", "Antebraço", "i"], "Rosca de punho na polia": ["Antebraço", "Antebraços apoiados, barra na polia baixa; flexione os punhos.", ["cable-wrist-curl-0.jpg", "cable-wrist-curl-1.jpg"], "antebraco", "Antebraço", "i"], "Rolo de punho": ["Antebraço", "Braços à frente; enrole a corda girando os punhos até subir o peso.", ["wrist-roller-0.jpg", "wrist-roller-1.jpg"], "antebraco", "Antebraço", "i"], "Pinça com anilhas": ["Antebraço", "Segure duas anilhas lisas pelas bordas, só com os dedos, pelo máximo de tempo.", ["plate-pinch-0.jpg", "plate-pinch-1.jpg"], "antebraco", "Antebraço", "i"], "Agachamento frontal": ["Quadríceps", "Barra apoiada na frente dos ombros, cotovelos altos; desça com tronco ereto.", ["front-barbell-squat-0.jpg", "front-barbell-squat-1.jpg"], "agach", "Quadríceps", "c"], "Agachamento no caixote": ["Quadríceps", "Desça até sentar levemente no caixote e suba sem embalo.", ["box-squat-0.jpg", "box-squat-1.jpg"], "agach", "Quadríceps", "c"], "Agachamento com halteres": ["Quadríceps", "Halteres ao lado do corpo; desça com coluna neutra e suba empurrando o chão.", ["dumbbell-squat-0.jpg", "dumbbell-squat-1.jpg"], "agach", "Quadríceps", "c"], "Agachamento sumô com halter": ["Quadríceps", "Pés bem afastados e virados para fora; halter entre as pernas.", ["plie-dumbbell-squat-0.jpg", "plie-dumbbell-squat-1.jpg"], "agach", "Quadríceps", "c"], "Hack pés fechados": ["Quadríceps", "Pés juntos e baixos na plataforma; foco maior no quadríceps.", ["narrow-stance-hack-squats-0.jpg", "narrow-stance-hack-squats-1.jpg"], "agach", "Quadríceps", "c"], "Agachamento na máquina deitado": ["Quadríceps", "Costas apoiadas; desça até 90° ou mais, sem tirar o quadril do apoio.", ["lying-machine-squat-0.jpg", "lying-machine-squat-1.jpg"], "agach", "Quadríceps", "c"], "Agachamento livre sem peso": ["Quadríceps", "Pés na largura dos ombros; desça como quem senta e suba.", ["bodyweight-squat-0.jpg", "bodyweight-squat-1.jpg"], "agach", "Quadríceps", "c"], "Leg press pés fechados": ["Quadríceps", "Pés juntos e baixos na plataforma; desça controlando.", ["narrow-stance-leg-press-0.jpg", "narrow-stance-leg-press-1.jpg"], "legpress", "Quadríceps", "c"], "Afundo no Smith": ["Quadríceps", "Um pé à frente, outro atrás; desça o joelho de trás em direção ao chão.", ["smith-single-leg-split-squat-0.jpg", "smith-single-leg-split-squat-1.jpg"], "legpress", "Quadríceps", "c"], "Afundo com barra": ["Quadríceps", "Barra nas costas; passo à frente e desça até os joelhos ficarem a 90°.", ["barbell-lunge-0.jpg", "barbell-lunge-1.jpg"], "legpress", "Quadríceps", "c"], "Passada com barra": ["Quadríceps", "Passos longos alternando as pernas, tronco ereto.", ["barbell-walking-lunge-0.jpg", "barbell-walking-lunge-1.jpg"], "legpress", "Quadríceps", "c"], "Passada sem peso": ["Quadríceps", "Passos longos alternados; joelho de trás quase toca o chão.", ["bodyweight-walking-lunge-0.jpg", "bodyweight-walking-lunge-1.jpg"], "legpress", "Quadríceps", "c"], "Afundo para trás com halteres": ["Quadríceps", "Dê o passo para trás e desça; volte empurrando com a perna da frente.", ["dumbbell-rear-lunge-0.jpg", "dumbbell-rear-lunge-1.jpg"], "legpress", "Quadríceps", "c"], "Subida no banco com halteres": ["Quadríceps", "Suba no banco empurrando com a perna de cima; desça devagar.", ["dumbbell-step-ups-0.jpg", "dumbbell-step-ups-1.jpg"], "legpress", "Quadríceps", "c"], "Bom-dia com barra": ["Posteriores", "Barra nas costas, joelhos semiflexionados; incline o tronco à frente com coluna neutra.", ["good-morning-0.jpg", "good-morning-1.jpg"], "hinge", "Posteriores", "c"], "Stiff no Smith": ["Posteriores", "Barra guiada; quadril para trás até alongar os posteriores.", ["smith-machine-stiff-legged-deadlift-0.jpg", "smith-machine-stiff-legged-deadlift-1.jpg"], "hinge", "Posteriores", "c"], "Levantamento terra sumô": ["Posteriores", "Pés bem afastados, mãos por dentro das pernas; suba estendendo o quadril.", ["sumo-deadlift-0.jpg", "sumo-deadlift-1.jpg"], "hinge", "Posteriores", "c"], "Flexão nórdica na máquina (GHR)": ["Posteriores", "Joelhos no apoio; desça o tronco à frente e suba puxando com os posteriores.", ["glute-ham-raise-0.jpg", "glute-ham-raise-1.jpg"], "flexora", "Posteriores", "c"], "Flexão nórdica": ["Posteriores", "Pés presos; desça o corpo à frente o mais devagar possível. Avançado.", ["natural-glute-ham-raise-0.jpg", "natural-glute-ham-raise-1.jpg"], "flexora", "Posteriores", "c"], "Hiperextensão reversa": ["Glúteos", "Tronco apoiado no banco; eleve as pernas estendidas contraindo os glúteos.", ["reverse-hyperextension-0.jpg", "reverse-hyperextension-1.jpg"], "gluteo", "Glúteos", "i"], "Coice de glúteo": ["Glúteos", "Em quatro apoios; empurre um calcanhar para cima e para trás.", ["glute-kickback-0.jpg", "glute-kickback-1.jpg"], "gluteo", "Glúteos", "i"], "Coice na polia": ["Glúteos", "Tornozeleira na polia baixa; leve a perna estendida para trás.", ["one-legged-cable-kickback-0.jpg", "one-legged-cable-kickback-1.jpg"], "gluteo", "Glúteos", "i"], "Pull through na polia": ["Glúteos", "De costas para a polia baixa, corda entre as pernas; estenda o quadril.", ["pull-through-0.jpg", "pull-through-1.jpg"], "gluteo", "Glúteos", "c"], "Ponte de glúteo unilateral": ["Glúteos", "Deitado, um pé no chão; eleve o quadril com uma perna só.", ["single-leg-glute-bridge-0.jpg", "single-leg-glute-bridge-1.jpg"], "gluteo", "Glúteos", "i"], "Ponte de glúteo": ["Glúteos", "Deitado, pés no chão; eleve o quadril e segure 1 s no topo.", ["butt-lift-bridge-0.jpg", "butt-lift-bridge-1.jpg"], "gluteo", "Glúteos", "i"], "Cadeira adutora": ["Adutores", "Costas apoiadas; feche as pernas contra a resistência e abra devagar.", ["thigh-adductor-0.jpg", "thigh-adductor-1.jpg"], "adutor", "Adutores", "i"], "Adução na polia": ["Adutores", "Tornozeleira na polia; traga a perna para dentro cruzando à frente da outra.", ["cable-hip-adduction-0.jpg", "cable-hip-adduction-1.jpg"], "adutor", "Adutores", "i"], "Panturrilha na máquina": ["Panturrilha", "Na máquina de panturrilha; desça bem os calcanhares e suba na ponta dos pés.", ["calf-press-0.jpg", "calf-press-1.jpg"], "pant", "Panturrilha", "i"], "Panturrilha no Smith": ["Panturrilha", "Ponta dos pés num degrau sob a barra; amplitude completa.", ["smith-machine-calf-raise-0.jpg", "smith-machine-calf-raise-1.jpg"], "pant", "Panturrilha", "i"], "Panturrilha burrinho": ["Panturrilha", "Tronco inclinado à frente, quadril carregado; suba e desça na ponta dos pés.", ["donkey-calf-raises-0.jpg", "donkey-calf-raises-1.jpg"], "pant", "Panturrilha", "i"], "Panturrilha em pé com halteres": ["Panturrilha", "Halteres nas mãos, ponta dos pés num degrau; suba e desça devagar.", ["standing-dumbbell-calf-raise-0.jpg", "standing-dumbbell-calf-raise-1.jpg"], "pant", "Panturrilha", "i"], "Panturrilha sentado unilateral": ["Panturrilha", "Sentado, halter sobre o joelho; eleve o calcanhar de uma perna.", ["dumbbell-seated-one-leg-calf-raise-0.jpg", "dumbbell-seated-one-leg-calf-raise-1.jpg"], "pant", "Panturrilha", "i"], "Abdominal tradicional": ["Abdômen", "Deitado, joelhos dobrados; tire os ombros do chão contraindo o abdômen.", ["crunches-0.jpg", "crunches-1.jpg"], "abd", "Abdômen", "i"], "Abdominal infra": ["Abdômen", "Deitado; traga os joelhos ao peito tirando o quadril do chão.", ["reverse-crunch-0.jpg", "reverse-crunch-1.jpg"], "abd", "Abdômen", "i"], "Prancha": ["Abdômen", "Antebraços e pontas dos pés no chão, corpo reto. Conte o tempo em vez de reps.", ["plank-0.jpg", "plank-1.jpg"], "abd", "Abdômen", "i"], "Prancha lateral": ["Abdômen", "Apoiado num antebraço, corpo alinhado de lado. Conte o tempo.", ["side-bridge-0.jpg", "side-bridge-1.jpg"], "abd", "Abdômen", "i"], "Abdominal no banco declinado": ["Abdômen", "Pés presos no banco declinado; suba o tronco até a metade.", ["decline-crunch-0.jpg", "decline-crunch-1.jpg"], "abd", "Abdômen", "i"], "Abdominal oblíquo": ["Abdômen", "Leve o cotovelo em direção ao joelho oposto, alternando os lados.", ["oblique-crunches-0.jpg", "oblique-crunches-1.jpg"], "abd", "Abdômen", "i"], "Abdominal bicicleta": ["Abdômen", "Pedale no ar tocando cotovelo no joelho oposto.", ["air-bike-0.jpg", "air-bike-1.jpg"], "abd", "Abdômen", "i"], "Giro russo": ["Abdômen", "Sentado, pés fora do chão; gire o tronco de um lado ao outro.", ["russian-twist-0.jpg", "russian-twist-1.jpg"], "abd", "Abdômen", "i"], "Lenhador na polia": ["Abdômen", "Puxe a corda em diagonal, de cima para baixo, girando o tronco.", ["standing-cable-wood-chop-0.jpg", "standing-cable-wood-chop-1.jpg"], "abd", "Abdômen", "i"], "Pallof press": ["Abdômen", "De lado para a polia; empurre a alça à frente sem deixar o tronco girar.", ["pallof-press-0.jpg", "pallof-press-1.jpg"], "abd", "Abdômen", "i"], "Elevação de joelhos nas paralelas": ["Abdômen", "Apoiado nos antebraços; eleve os joelhos ao peito.", ["knee-hip-raise-on-parallel-bars-0.jpg", "knee-hip-raise-on-parallel-bars-1.jpg"], "abd", "Abdômen", "i"], "Elevação de pernas no banco": ["Abdômen", "Deitado no banco; eleve as pernas estendidas até a vertical.", ["flat-bench-lying-leg-raise-0.jpg", "flat-bench-lying-leg-raise-1.jpg"], "abd", "Abdômen", "i"], "Roda abdominal": ["Abdômen", "Ajoelhado; role a roda à frente sem arquear a lombar e volte.", ["ab-roller-0.jpg", "ab-roller-1.jpg"], "abd", "Abdômen", "i"], "Dead bug": ["Abdômen", "Deitado, braços e pernas para cima; estenda braço e perna opostos.", ["dead-bug-0.jpg", "dead-bug-1.jpg"], "abd", "Abdômen", "i"], "Flexão lateral com halter": ["Abdômen", "Em pé, halter numa mão; incline o tronco de lado e volte.", ["dumbbell-side-bend-0.jpg", "dumbbell-side-bend-1.jpg"], "abd", "Abdômen", "i"], "Abdominal completo": ["Abdômen", "Deitado, suba o tronco até sentar e desça devagar.", ["sit-up-0.jpg", "sit-up-1.jpg"], "abd", "Abdômen", "i"]};
+const GROUPS = ['Peito','Costas','Ombros','Trapézio','Bíceps','Tríceps','Antebraço','Quadríceps','Posteriores','Glúteos','Adutores','Panturrilha','Abdômen','Lombar'];
+const groupCount = g => Object.values(EX).filter(v => v[0] === g).length;
 const exInfo = n => EX[n] || ['Outros','Movimento controlado, postura estável e amplitude confortável.',[]];
 const exImg = (n,i=0) => { const f = exInfo(n)[2][i]; return f ? 'images/ex/'+f : ''; };
 
@@ -1119,7 +555,8 @@ function exerciseCard(e,i,d){
       <div class="exbtns"><button class="btn-o btn-sm" data-add="${i}">＋ Série</button>
         ${i < d.ex.length-1 ? `<button class="btn-g btn-sm" data-next="${i+1}">Próximo →</button>` : `<button class="btn-g btn-sm" data-next="finish">Finalizar ↓</button>`}</div>
       ${e.sets.length > 1 && !hasData({ex:[{sets:[e.sets[e.sets.length-1]]}]}) ? `<button class="btn-sm" style="background:none;color:var(--mut);margin-top:4px;padding:6px" data-rem="${i}">− remover última série vazia</button>` : ''}
-      ${e.extra ? `<button class="btn-sm" style="background:none;color:var(--red);margin-top:4px;padding:6px" data-delex="${i}">✕ tirar este exercício do treino</button>` : ''}
+      <div class="exedit"><button class="btn-g btn-sm" data-swap="${i}">⇄ Trocar exercício</button><button class="btn-sm" style="background:none;color:var(--red)" data-delex="${i}">✕ Remover</button></div>
+      ${e.swappedFrom ? `<small class="muted" style="display:block;margin-top:6px">No lugar de: ${esc(e.swappedFrom)}</small>` : ''}
     </div></article>`;
 }
 
@@ -1173,11 +610,8 @@ function wireTrain(){
   $('finish').onclick = finishSession;
   $('startWorkout') && ($('startWorkout').onclick = () => { startWorkout(); keepScroll(renderTrain); });
   $('addEx').onclick = openAddExercise;
-  root.querySelectorAll('[data-delex]').forEach(b => b.onclick = () => {
-    const d = ensureDraft(day), i = +b.dataset.delex, e = d.ex[i];
-    if(e.sets.some(s => s.done) && !confirm(`Tirar ${e.name} do treino? As séries marcadas dele serão descartadas.`)) return;
-    d.ex.splice(i,1); touch(d); save(); keepScroll(renderTrain); toast('Exercício removido deste treino.');
-  });
+  root.querySelectorAll('[data-delex]').forEach(b => b.onclick = () => openRemoveSheet(+b.dataset.delex));
+  root.querySelectorAll('[data-swap]').forEach(b => b.onclick = () => openSwapSheet(+b.dataset.swap));
   $('ckGo') && ($('ckGo').onclick = openCheckin);
   $('planGo') && ($('planGo').onclick = () => { tab = 'evo'; evoTab = 'analise'; render(); window.scrollTo({top:0}); });
 }
@@ -1290,7 +724,7 @@ function showSummary(rec, prs){
 function openSheet(html){ $('sheet').innerHTML = '<div class="grab"></div>' + html; $('sheetbg').classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
 function closeSheet(){ $('sheetbg').classList.add('hidden'); $('sheet').innerHTML = ''; document.body.style.overflow = ''; }
 $('sheetbg').addEventListener('click', e => { if(e.target === $('sheetbg')) closeSheet(); });
-let addSel = [], addSets = 3, addGroup = '', addQ = '';
+let addSel = [], addSets = 3, addGroup = '', addQ = '', addMode = 'add', swapIdx = -1, swapPlan = false;
 function rangeForEx(name){
   const info = EX[name];
   if(!info) return [10,12];
@@ -1298,37 +732,88 @@ function rangeForEx(name){
   if(info[4] === 'Panturrilha') return [12,15];
   return info[5] === 'c' ? [8,12] : [10,15];
 }
-function openAddExercise(){ addSel = []; addSets = 3; addGroup = ''; addQ = ''; renderAddSheet(); }
+function openAddExercise(){ addMode = 'add'; addSel = []; addSets = 3; addGroup = ''; addQ = ''; renderAddSheet(); }
+function openSwapSheet(i){
+  const e = getDraft(day).ex[i]; if(!e) return;
+  addMode = 'swap'; swapIdx = i; swapPlan = false; addSel = []; addQ = '';
+  addGroup = EX[e.name]?.[0] || '';
+  renderAddSheet();
+}
+// nome original na ficha (antes de trocas feitas hoje)
+const planName = e => e.swappedFrom || e.name;
+const inPlanDay = (e, d) => !e.extra && state.plans[d].ex.some(x => x[0] === planName(e));
+function replaceInPlan(d, oldName, newName){
+  const p = state.plans[d], j = p.ex.findIndex(x => x[0] === oldName);
+  if(j < 0) return false;
+  state.planHistory.push({id:uuid(), date:new Date().toISOString(), reason: newName ? `Troca no D${d+1}: ${oldName} → ${newName}` : `Removido do D${d+1}: ${oldName}`, plans:clone(state.plans), version:state.planVersion||6});
+  if(newName) p.ex[j] = [newName, p.ex[j][1], p.ex[j][2], p.ex[j][3]]; else p.ex.splice(j,1);
+  state.plansAt = new Date().toISOString();
+  return true;
+}
+function openRemoveSheet(i){
+  const d = getDraft(day), e = d.ex[i]; if(!e) return;
+  const done = e.sets.filter(s => s.done).length, canPlan = inPlanDay(e, day);
+  openSheet(`<h3>Remover ${esc(e.name)}?</h3>
+    ${done ? `<p class="muted" style="font-size:13px">As ${done} série(s) marcadas dele serão descartadas.</p>` : '<p class="muted" style="font-size:13px">Escolha se é só hoje ou se ele sai da ficha.</p>'}
+    <div style="display:grid;gap:8px;margin-top:12px">
+      <button class="btn-g" id="remToday">Remover só do treino de hoje</button>
+      ${canPlan ? `<button class="btn-d" id="remPlan">Remover hoje e da ficha D${day+1}</button>` : ''}
+      <button class="btn-sm" style="background:none;color:var(--mut)" id="remCancel">Cancelar</button></div>`);
+  const go = plan => {
+    const dr = ensureDraft(day), ex = dr.ex[i];
+    if(plan) replaceInPlan(day, planName(ex), null);
+    dr.ex.splice(i,1); touch(dr); save(); closeSheet(); keepScroll(renderTrain);
+    toast(plan ? `${ex.name} saiu do treino e da ficha D${day+1}.` : `${ex.name} removido do treino de hoje.`);
+  };
+  $('remToday').onclick = () => go(false);
+  $('remPlan') && ($('remPlan').onclick = () => go(true));
+  $('remCancel').onclick = closeSheet;
+}
 function renderAddSheet(focus){
   const d = getDraft(day), inDay = new Set(d.ex.map(e => e.name));
-  const q = addQ.trim().toLowerCase();
+  const q = addQ.trim().toLowerCase(), swap = addMode === 'swap', cur = swap ? d.ex[swapIdx] : null;
   const names = Object.keys(EX).filter(n => (!addGroup || EX[n][0] === addGroup) && (!q || n.toLowerCase().includes(q) || EX[n][4].toLowerCase().includes(q)))
     .sort((a,b) => GROUPS.indexOf(EX[a][0]) - GROUPS.indexOf(EX[b][0]) || a.localeCompare(b));
   const custom = q && !Object.keys(EX).some(n => n.toLowerCase() === q) ? addQ.trim() : '';
-  openSheet(`<div class="row"><h3>Adicionar exercício</h3><button class="btn-g btn-sm" id="addClose">✕</button></div>
-    <p class="muted" style="font-size:12.5px;margin:4px 0 8px">Entra só no treino de hoje. A ficha não muda.</p>
+  openSheet(`<div class="row"><h3>${swap ? 'Trocar exercício' : 'Adicionar exercício'}</h3><button class="btn-g btn-sm" id="addClose">✕</button></div>
+    <p class="muted" style="font-size:12.5px;margin:4px 0 8px">${swap ? `Sai: <b style="color:var(--txt)">${esc(cur.name)}</b>. Escolha o que entra no lugar (mesmas ${cur.sets.length} séries).` : 'Entra só no treino de hoje. A ficha não muda.'}</p>
     <input id="addQ" placeholder="Buscar: abdominal, rosca, panturrilha…" value="${esc(addQ)}" autocomplete="off">
-    <div class="chips"><button class="chip ${!addGroup?'on':''}" data-ag="">Todos</button>${GROUPS.map(g => `<button class="chip ${addGroup===g?'on':''}" data-ag="${g}">${g}</button>`).join('')}</div>
+    <div class="chips"><button class="chip ${!addGroup?'on':''}" data-ag="">Todos</button>${GROUPS.map(g => `<button class="chip ${addGroup===g?'on':''}" data-ag="${g}">${g} <small style="opacity:.7">${groupCount(g)}</small></button>`).join('')}</div>
     <div class="list">
       ${custom ? `<button class="pick ${addSel.includes(custom)?'on':''}" data-pk="${esc(custom)}"><img alt=""><div class="t"><strong>＋ “${esc(custom)}”</strong><small>exercício fora da biblioteca, sem foto</small></div><span class="box">${CHECK}</span></button>` : ''}
       ${names.map(n => `<button class="pick ${addSel.includes(n)?'on':''} ${inDay.has(n)?'inday':''}" data-pk="${esc(n)}"><img src="${exImg(n,1)||exImg(n,0)}" loading="lazy" alt=""><div class="t"><strong>${esc(n)}</strong><small><span style="color:var(--y)">${esc(EX[n][0])}</span>${inDay.has(n)?' · já está no treino':''}</small></div><span class="box">${CHECK}</span></button>`).join('') || (custom ? '' : '<p class="muted">Nada encontrado.</p>')}
     </div>
-    <div class="sheet-foot"><div class="stepper"><button id="sMinus" aria-label="Menos séries">−</button><span>${addSets} séries</span><button id="sPlus" aria-label="Mais séries">＋</button></div>
-      <button class="btn-y" style="flex:1" id="addGo" ${addSel.length?'':'disabled'}>Adicionar${addSel.length?` (${addSel.length})`:''}</button></div>`);
+    ${swap && inPlanDay(cur, day) ? `<label class="optrow"><input type="checkbox" id="swapPlan" ${swapPlan?'checked':''}><span>Trocar também na <b>ficha D${day+1}</b> (vale para os próximos treinos)</span></label>` : ''}
+    <div class="sheet-foot">${swap ? '' : `<div class="stepper"><button id="sMinus" aria-label="Menos séries">−</button><span>${addSets} séries</span><button id="sPlus" aria-label="Mais séries">＋</button></div>`}
+      <button class="btn-y" style="flex:1" id="addGo" ${addSel.length?'':'disabled'}>${swap ? 'Trocar' : 'Adicionar'+(addSel.length?` (${addSel.length})`:'')}</button></div>`);
   const qi = $('addQ');
   qi.oninput = () => { addQ = qi.value; const pos = qi.selectionStart; renderAddSheet(true); const n = $('addQ'); n.focus(); n.setSelectionRange(pos,pos); };
   if(focus){ qi.focus(); }
   $('addClose').onclick = closeSheet;
+  $('sheet').querySelector('.chip.on')?.scrollIntoView({inline:'center', block:'nearest'});
   $('sheet').querySelectorAll('[data-ag]').forEach(b => b.onclick = () => { addGroup = b.dataset.ag; renderAddSheet(); });
   $('sheet').querySelectorAll('[data-pk]').forEach(b => b.onclick = () => {
-    const n = b.dataset.pk; addSel = addSel.includes(n) ? addSel.filter(x => x !== n) : [...addSel, n];
-    b.classList.toggle('on', addSel.includes(n));
-    const go = $('addGo'); go.disabled = !addSel.length; go.textContent = 'Adicionar' + (addSel.length ? ` (${addSel.length})` : '');
+    const n = b.dataset.pk;
+    if(swap){ addSel = addSel[0] === n ? [] : [n]; $('sheet').querySelectorAll('[data-pk]').forEach(x => x.classList.toggle('on', addSel.includes(x.dataset.pk))); }
+    else { addSel = addSel.includes(n) ? addSel.filter(x => x !== n) : [...addSel, n]; b.classList.toggle('on', addSel.includes(n)); }
+    const go = $('addGo'); go.disabled = !addSel.length; go.textContent = swap ? 'Trocar' : 'Adicionar' + (addSel.length ? ` (${addSel.length})` : '');
   });
-  $('sMinus').onclick = () => { addSets = Math.max(1, addSets-1); $('sheet').querySelector('.stepper span').textContent = addSets+' séries'; };
-  $('sPlus').onclick = () => { addSets = Math.min(8, addSets+1); $('sheet').querySelector('.stepper span').textContent = addSets+' séries'; };
+  $('swapPlan') && ($('swapPlan').onchange = ev => { swapPlan = ev.target.checked; });
+  $('sMinus') && ($('sMinus').onclick = () => { addSets = Math.max(1, addSets-1); $('sheet').querySelector('.stepper span').textContent = addSets+' séries'; });
+  $('sPlus') && ($('sPlus').onclick = () => { addSets = Math.min(8, addSets+1); $('sheet').querySelector('.stepper span').textContent = addSets+' séries'; });
   $('addGo').onclick = () => {
     if(!addSel.length) return;
+    if(swap){
+      const dr = ensureDraft(day), old = dr.ex[swapIdx], n = addSel[0];
+      if(old.sets.some(s => s.done) && !confirm(`As séries marcadas de ${old.name} serão descartadas. Trocar mesmo assim?`)) return;
+      const orig = planName(old);
+      let planMsg = '';
+      if(swapPlan && inPlanDay(old, day) && replaceInPlan(day, orig, n)) planMsg = ` e na ficha D${day+1}`;
+      dr.ex[swapIdx] = {name:n, min:old.min, max:old.max, note:'', extra:!!old.extra, ...(planMsg || old.extra ? {} : {swappedFrom:orig}), sets:old.sets.map(() => ({kg:'',reps:'',done:false}))};
+      touch(dr); save(); closeSheet(); keepScroll(renderTrain);
+      toast(`Trocado por ${n}${planMsg || ' só hoje'}.`, 3500);
+      return;
+    }
     const d = ensureDraft(day), first = d.ex.length;
     for(const n of addSel){ const [mn, mx] = rangeForEx(n); d.ex.push({name:n, min:mn, max:mx, note:'', extra:true, sets:Array.from({length:addSets}, () => ({kg:'',reps:'',done:false}))}); }
     touch(d); save(); closeSheet(); renderTrain();
@@ -1456,7 +941,7 @@ async function migrateLegacyPhotos(){
 
 
 /* ---------- fotos: se falhar, tenta de novo e depois busca na fonte original (CDN) ---------- */
-const CDN_IDS = {"incline-dumbbell-press": "Incline_Dumbbell_Press", "leverage-incline-chest-press": "Leverage_Incline_Chest_Press", "smith-machine-incline-bench-press": "Smith_Machine_Incline_Bench_Press", "barbell-incline-bench-press---medium-grip": "Barbell_Incline_Bench_Press_-_Medium_Grip", "leverage-chest-press": "Leverage_Chest_Press", "dumbbell-bench-press": "Dumbbell_Bench_Press", "barbell-bench-press---medium-grip": "Barbell_Bench_Press_-_Medium_Grip", "butterfly": "Butterfly", "cable-crossover": "Cable_Crossover", "dumbbell-flyes": "Dumbbell_Flyes", "triceps-pushdown---rope-attachment": "Triceps_Pushdown_-_Rope_Attachment", "triceps-pushdown": "Triceps_Pushdown", "triceps-pushdown---v-bar-attachment": "Triceps_Pushdown_-_V-Bar_Attachment", "ez-bar-skullcrusher": "EZ-Bar_Skullcrusher", "cable-rope-overhead-triceps-extension": "Cable_Rope_Overhead_Triceps_Extension", "wide-grip-lat-pulldown": "Wide-Grip_Lat_Pulldown", "underhand-cable-pulldowns": "Underhand_Cable_Pulldowns", "v-bar-pulldown": "V-Bar_Pulldown", "seated-cable-rows": "Seated_Cable_Rows", "leverage-high-row": "Leverage_High_Row", "leverage-iso-row": "Leverage_Iso_Row", "one-arm-dumbbell-row": "One-Arm_Dumbbell_Row", "bent-over-barbell-row": "Bent_Over_Barbell_Row", "t-bar-row-with-handle": "T-Bar_Row_with_Handle", "reverse-machine-flyes": "Reverse_Machine_Flyes", "reverse-flyes": "Reverse_Flyes", "face-pull": "Face_Pull", "leverage-shoulder-press": "Leverage_Shoulder_Press", "dumbbell-shoulder-press": "Dumbbell_Shoulder_Press", "smith-machine-overhead-shoulder-press": "Smith_Machine_Overhead_Shoulder_Press", "side-lateral-raise": "Side_Lateral_Raise", "seated-side-lateral-raise": "Seated_Side_Lateral_Raise", "cable-seated-lateral-raise": "Cable_Seated_Lateral_Raise", "one-arm-dumbbell-preacher-curl": "One_Arm_Dumbbell_Preacher_Curl", "incline-dumbbell-curl": "Incline_Dumbbell_Curl", "hammer-curls": "Hammer_Curls", "ez-bar-curl": "EZ-Bar_Curl", "standing-biceps-cable-curl": "Standing_Biceps_Cable_Curl", "concentration-curls": "Concentration_Curls", "machine-preacher-curls": "Machine_Preacher_Curls", "hack-squat": "Hack_Squat", "barbell-squat": "Barbell_Squat", "smith-machine-squat": "Smith_Machine_Squat", "leg-press": "Leg_Press", "split-squat-with-dumbbells": "Split_Squat_with_Dumbbells", "dumbbell-lunges": "Dumbbell_Lunges", "leg-extensions": "Leg_Extensions", "single-leg-leg-extension": "Single-Leg_Leg_Extension", "seated-leg-curl": "Seated_Leg_Curl", "lying-leg-curls": "Lying_Leg_Curls", "standing-leg-curl": "Standing_Leg_Curl", "stiff-legged-dumbbell-deadlift": "Stiff-Legged_Dumbbell_Deadlift", "romanian-deadlift": "Romanian_Deadlift", "stiff-legged-barbell-deadlift": "Stiff-Legged_Barbell_Deadlift", "barbell-hip-thrust": "Barbell_Hip_Thrust", "barbell-glute-bridge": "Barbell_Glute_Bridge", "thigh-abductor": "Thigh_Abductor", "standing-calf-raises": "Standing_Calf_Raises", "calf-press-on-the-leg-press-machine": "Calf_Press_On_The_Leg_Press_Machine", "seated-calf-raise": "Seated_Calf_Raise", "ab-crunch-machine": "Ab_Crunch_Machine", "cable-crunch": "Cable_Crunch", "hanging-leg-raise": "Hanging_Leg_Raise"};
+const CDN_IDS = {"incline-dumbbell-press": "Incline_Dumbbell_Press", "leverage-incline-chest-press": "Leverage_Incline_Chest_Press", "smith-machine-incline-bench-press": "Smith_Machine_Incline_Bench_Press", "barbell-incline-bench-press---medium-grip": "Barbell_Incline_Bench_Press_-_Medium_Grip", "leverage-chest-press": "Leverage_Chest_Press", "dumbbell-bench-press": "Dumbbell_Bench_Press", "barbell-bench-press---medium-grip": "Barbell_Bench_Press_-_Medium_Grip", "butterfly": "Butterfly", "cable-crossover": "Cable_Crossover", "dumbbell-flyes": "Dumbbell_Flyes", "triceps-pushdown---rope-attachment": "Triceps_Pushdown_-_Rope_Attachment", "triceps-pushdown": "Triceps_Pushdown", "triceps-pushdown---v-bar-attachment": "Triceps_Pushdown_-_V-Bar_Attachment", "ez-bar-skullcrusher": "EZ-Bar_Skullcrusher", "cable-rope-overhead-triceps-extension": "Cable_Rope_Overhead_Triceps_Extension", "wide-grip-lat-pulldown": "Wide-Grip_Lat_Pulldown", "underhand-cable-pulldowns": "Underhand_Cable_Pulldowns", "v-bar-pulldown": "V-Bar_Pulldown", "seated-cable-rows": "Seated_Cable_Rows", "leverage-high-row": "Leverage_High_Row", "leverage-iso-row": "Leverage_Iso_Row", "one-arm-dumbbell-row": "One-Arm_Dumbbell_Row", "bent-over-barbell-row": "Bent_Over_Barbell_Row", "t-bar-row-with-handle": "T-Bar_Row_with_Handle", "reverse-machine-flyes": "Reverse_Machine_Flyes", "reverse-flyes": "Reverse_Flyes", "face-pull": "Face_Pull", "leverage-shoulder-press": "Leverage_Shoulder_Press", "dumbbell-shoulder-press": "Dumbbell_Shoulder_Press", "smith-machine-overhead-shoulder-press": "Smith_Machine_Overhead_Shoulder_Press", "side-lateral-raise": "Side_Lateral_Raise", "seated-side-lateral-raise": "Seated_Side_Lateral_Raise", "cable-seated-lateral-raise": "Cable_Seated_Lateral_Raise", "one-arm-dumbbell-preacher-curl": "One_Arm_Dumbbell_Preacher_Curl", "incline-dumbbell-curl": "Incline_Dumbbell_Curl", "hammer-curls": "Hammer_Curls", "ez-bar-curl": "EZ-Bar_Curl", "standing-biceps-cable-curl": "Standing_Biceps_Cable_Curl", "concentration-curls": "Concentration_Curls", "machine-preacher-curls": "Machine_Preacher_Curls", "hack-squat": "Hack_Squat", "barbell-squat": "Barbell_Squat", "smith-machine-squat": "Smith_Machine_Squat", "leg-press": "Leg_Press", "split-squat-with-dumbbells": "Split_Squat_with_Dumbbells", "dumbbell-lunges": "Dumbbell_Lunges", "leg-extensions": "Leg_Extensions", "single-leg-leg-extension": "Single-Leg_Leg_Extension", "seated-leg-curl": "Seated_Leg_Curl", "lying-leg-curls": "Lying_Leg_Curls", "standing-leg-curl": "Standing_Leg_Curl", "stiff-legged-dumbbell-deadlift": "Stiff-Legged_Dumbbell_Deadlift", "romanian-deadlift": "Romanian_Deadlift", "stiff-legged-barbell-deadlift": "Stiff-Legged_Barbell_Deadlift", "barbell-hip-thrust": "Barbell_Hip_Thrust", "barbell-glute-bridge": "Barbell_Glute_Bridge", "thigh-abductor": "Thigh_Abductor", "standing-calf-raises": "Standing_Calf_Raises", "calf-press-on-the-leg-press-machine": "Calf_Press_On_The_Leg_Press_Machine", "seated-calf-raise": "Seated_Calf_Raise", "ab-crunch-machine": "Ab_Crunch_Machine", "cable-crunch": "Cable_Crunch", "hanging-leg-raise": "Hanging_Leg_Raise", "smith-machine-bench-press": "Smith_Machine_Bench_Press", "cable-chest-press": "Cable_Chest_Press", "dumbbell-bench-press-with-neutral-grip": "Dumbbell_Bench_Press_with_Neutral_Grip", "wide-grip-barbell-bench-press": "Wide-Grip_Barbell_Bench_Press", "pushups": "Pushups", "hammer-grip-incline-db-bench-press": "Hammer_Grip_Incline_DB_Bench_Press", "incline-cable-chest-press": "Incline_Cable_Chest_Press", "push-ups-with-feet-elevated": "Push-Ups_With_Feet_Elevated", "decline-barbell-bench-press": "Decline_Barbell_Bench_Press", "decline-dumbbell-bench-press": "Decline_Dumbbell_Bench_Press", "leverage-decline-chest-press": "Leverage_Decline_Chest_Press", "smith-machine-decline-press": "Smith_Machine_Decline_Press", "dips---chest-version": "Dips_-_Chest_Version", "incline-dumbbell-flyes": "Incline_Dumbbell_Flyes", "decline-dumbbell-flyes": "Decline_Dumbbell_Flyes", "flat-bench-cable-flyes": "Flat_Bench_Cable_Flyes", "incline-cable-flye": "Incline_Cable_Flye", "low-cable-crossover": "Low_Cable_Crossover", "single-arm-cable-crossover": "Single-Arm_Cable_Crossover", "straight-arm-dumbbell-pullover": "Straight-Arm_Dumbbell_Pullover", "pullups": "Pullups", "chin-up": "Chin-Up", "band-assisted-pull-up": "Band_Assisted_Pull-Up", "close-grip-front-lat-pulldown": "Close-Grip_Front_Lat_Pulldown", "one-arm-lat-pulldown": "One_Arm_Lat_Pulldown", "straight-arm-pulldown": "Straight-Arm_Pulldown", "rope-straight-arm-pulldown": "Rope_Straight-Arm_Pulldown", "bent-arm-barbell-pullover": "Bent-Arm_Barbell_Pullover", "seated-one-arm-cable-pulley-rows": "Seated_One-arm_Cable_Pulley_Rows", "bent-over-two-dumbbell-row": "Bent_Over_Two-Dumbbell_Row", "dumbbell-incline-row": "Dumbbell_Incline_Row", "lying-t-bar-row": "Lying_T-Bar_Row", "smith-machine-bent-over-row": "Smith_Machine_Bent_Over_Row", "reverse-grip-bent-over-rows": "Reverse_Grip_Bent-Over_Rows", "one-arm-long-bar-row": "One-Arm_Long_Bar_Row", "inverted-row": "Inverted_Row", "hyperextensions-back-extensions": "Hyperextensions_Back_Extensions", "barbell-deadlift": "Barbell_Deadlift", "rack-pulls": "Rack_Pulls", "arnold-dumbbell-press": "Arnold_Dumbbell_Press", "standing-military-press": "Standing_Military_Press", "machine-shoulder-military-press": "Machine_Shoulder_Military_Press", "seated-cable-shoulder-press": "Seated_Cable_Shoulder_Press", "standing-dumbbell-press": "Standing_Dumbbell_Press", "one-arm-side-laterals": "One-Arm_Side_Laterals", "standing-low-pulley-deltoid-raise": "Standing_Low-Pulley_Deltoid_Raise", "lying-one-arm-lateral-raise": "Lying_One-Arm_Lateral_Raise", "one-arm-incline-lateral-raise": "One-Arm_Incline_Lateral_Raise", "upright-barbell-row": "Upright_Barbell_Row", "front-dumbbell-raise": "Front_Dumbbell_Raise", "front-cable-raise": "Front_Cable_Raise", "front-plate-raise": "Front_Plate_Raise", "cable-rear-delt-fly": "Cable_Rear_Delt_Fly", "seated-bent-over-rear-delt-raise": "Seated_Bent-Over_Rear_Delt_Raise", "bent-over-low-pulley-side-lateral": "Bent_Over_Low-Pulley_Side_Lateral", "cable-rope-rear-delt-rows": "Cable_Rope_Rear-Delt_Rows", "external-rotation-with-cable": "External_Rotation_with_Cable", "barbell-shrug": "Barbell_Shrug", "dumbbell-shrug": "Dumbbell_Shrug", "cable-shrugs": "Cable_Shrugs", "leverage-shrug": "Leverage_Shrug", "smith-machine-behind-the-back-shrug": "Smith_Machine_Behind_the_Back_Shrug", "standing-dumbbell-upright-row": "Standing_Dumbbell_Upright_Row", "upright-cable-row": "Upright_Cable_Row", "smith-machine-upright-row": "Smith_Machine_Upright_Row", "barbell-curl": "Barbell_Curl", "dumbbell-alternate-bicep-curl": "Dumbbell_Alternate_Bicep_Curl", "dumbbell-bicep-curl": "Dumbbell_Bicep_Curl", "preacher-curl": "Preacher_Curl", "two-arm-dumbbell-preacher-curl": "Two-Arm_Dumbbell_Preacher_Curl", "cable-preacher-curl": "Cable_Preacher_Curl", "spider-curl": "Spider_Curl", "machine-bicep-curl": "Machine_Bicep_Curl", "standing-one-arm-cable-curl": "Standing_One-Arm_Cable_Curl", "overhead-cable-curl": "Overhead_Cable_Curl", "drag-curl": "Drag_Curl", "zottman-curl": "Zottman_Curl", "cable-hammer-curls---rope-attachment": "Cable_Hammer_Curls_-_Rope_Attachment", "cross-body-hammer-curl": "Cross_Body_Hammer_Curl", "incline-hammer-curls": "Incline_Hammer_Curls", "alternate-hammer-curl": "Alternate_Hammer_Curl", "reverse-grip-triceps-pushdown": "Reverse_Grip_Triceps_Pushdown", "cable-one-arm-tricep-extension": "Cable_One_Arm_Tricep_Extension", "tricep-dumbbell-kickback": "Tricep_Dumbbell_Kickback", "machine-triceps-extension": "Machine_Triceps_Extension", "standing-dumbbell-triceps-extension": "Standing_Dumbbell_Triceps_Extension", "standing-one-arm-dumbbell-triceps-extension": "Standing_One-Arm_Dumbbell_Triceps_Extension", "standing-low-pulley-one-arm-triceps-extension": "Standing_Low-Pulley_One-Arm_Triceps_Extension", "lying-dumbbell-tricep-extension": "Lying_Dumbbell_Tricep_Extension", "cable-lying-triceps-extension": "Cable_Lying_Triceps_Extension", "dip-machine": "Dip_Machine", "dips---triceps-version": "Dips_-_Triceps_Version", "bench-dips": "Bench_Dips", "close-grip-barbell-bench-press": "Close-Grip_Barbell_Bench_Press", "smith-machine-close-grip-bench-press": "Smith_Machine_Close-Grip_Bench_Press", "reverse-barbell-curl": "Reverse_Barbell_Curl", "reverse-cable-curl": "Reverse_Cable_Curl", "palms-up-barbell-wrist-curl-over-a-bench": "Palms-Up_Barbell_Wrist_Curl_Over_A_Bench", "palms-down-wrist-curl-over-a-bench": "Palms-Down_Wrist_Curl_Over_A_Bench", "seated-dumbbell-palms-up-wrist-curl": "Seated_Dumbbell_Palms-Up_Wrist_Curl", "cable-wrist-curl": "Cable_Wrist_Curl", "wrist-roller": "Wrist_Roller", "plate-pinch": "Plate_Pinch", "front-barbell-squat": "Front_Barbell_Squat", "box-squat": "Box_Squat", "dumbbell-squat": "Dumbbell_Squat", "plie-dumbbell-squat": "Plie_Dumbbell_Squat", "narrow-stance-hack-squats": "Narrow_Stance_Hack_Squats", "lying-machine-squat": "Lying_Machine_Squat", "bodyweight-squat": "Bodyweight_Squat", "narrow-stance-leg-press": "Narrow_Stance_Leg_Press", "smith-single-leg-split-squat": "Smith_Single-Leg_Split_Squat", "barbell-lunge": "Barbell_Lunge", "barbell-walking-lunge": "Barbell_Walking_Lunge", "bodyweight-walking-lunge": "Bodyweight_Walking_Lunge", "dumbbell-rear-lunge": "Dumbbell_Rear_Lunge", "dumbbell-step-ups": "Dumbbell_Step_Ups", "good-morning": "Good_Morning", "smith-machine-stiff-legged-deadlift": "Smith_Machine_Stiff-Legged_Deadlift", "sumo-deadlift": "Sumo_Deadlift", "glute-ham-raise": "Glute_Ham_Raise", "natural-glute-ham-raise": "Natural_Glute_Ham_Raise", "reverse-hyperextension": "Reverse_Hyperextension", "glute-kickback": "Glute_Kickback", "one-legged-cable-kickback": "One-Legged_Cable_Kickback", "pull-through": "Pull_Through", "single-leg-glute-bridge": "Single_Leg_Glute_Bridge", "butt-lift-bridge": "Butt_Lift_Bridge", "thigh-adductor": "Thigh_Adductor", "cable-hip-adduction": "Cable_Hip_Adduction", "calf-press": "Calf_Press", "smith-machine-calf-raise": "Smith_Machine_Calf_Raise", "donkey-calf-raises": "Donkey_Calf_Raises", "standing-dumbbell-calf-raise": "Standing_Dumbbell_Calf_Raise", "dumbbell-seated-one-leg-calf-raise": "Dumbbell_Seated_One-Leg_Calf_Raise", "crunches": "Crunches", "reverse-crunch": "Reverse_Crunch", "plank": "Plank", "side-bridge": "Side_Bridge", "decline-crunch": "Decline_Crunch", "oblique-crunches": "Oblique_Crunches", "air-bike": "Air_Bike", "russian-twist": "Russian_Twist", "standing-cable-wood-chop": "Standing_Cable_Wood_Chop", "pallof-press": "Pallof_Press", "knee-hip-raise-on-parallel-bars": "Knee_Hip_Raise_On_Parallel_Bars", "flat-bench-lying-leg-raise": "Flat_Bench_Lying_Leg_Raise", "ab-roller": "Ab_Roller", "dead-bug": "Dead_Bug", "dumbbell-side-bend": "Dumbbell_Side_Bend", "sit-up": "Sit-Up"};
 const CDN_BASE = 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/';
 document.addEventListener('error', ev => {
   const img = ev.target;
@@ -1525,7 +1010,7 @@ function renderLibrary(){
   const keepQ = $('libq')?.value || '';
   $('library').innerHTML = `<div class="pagehead"><div><small>FICHA COMPLETA COM INSTRUÇÕES</small><h2>Exercícios</h2></div><span class="badge">${Object.keys(EX).length}</span></div>
     <input id="libq" placeholder="Buscar exercício…" value="${esc(keepQ)}">
-    <div class="chips"><button class="chip ${!libGroup?'on':''}" data-g="">Todos</button>${GROUPS.map(g => `<button class="chip ${libGroup===g?'on':''}" data-g="${g}">${g}</button>`).join('')}</div>
+    <div class="chips"><button class="chip ${!libGroup?'on':''}" data-g="">Todos</button>${GROUPS.map(g => `<button class="chip ${libGroup===g?'on':''}" data-g="${g}">${g} <small style="opacity:.7">${groupCount(g)}</small></button>`).join('')}</div>
     <div id="liblist" style="margin-top:10px">${names.map(n => {
       const b = bestKg(n), inPlan = state.plans.map((p,i) => p.ex.some(e => e[0] === n) ? 'D'+(i+1) : '').filter(Boolean).join(' ');
       return `<button class="lib-item" data-open="${esc(n)}"><img src="${exImg(n,1)||exImg(n,0)}" loading="lazy" alt=""><div class="t"><strong>${esc(n)}</strong><span class="g">${esc(EX[n][0])}</span> <small>· ${inPlan||'fora da ficha'}${b?` · recorde ${fmtKg(b.kg)} kg`:''}</small></div><span class="chev">${libOpen===n?'▾':'›'}</span></button>
@@ -2069,7 +1554,7 @@ function generatePlan(priorities){
     });
   });
   // volume semanal por músculo: 10–20 séries (abdômen/panturrilha: 6–16)
-  const vol = () => { const v = Object.fromEntries(MUSCLES.map(m => [m,0])); out.forEach(p => p.ex.forEach(([n,s]) => { const m = EX[n]?.[4]; if(m) v[m] += s; })); return v; };
+  const vol = () => { const v = Object.fromEntries(MUSCLES.map(m => [m,0])); out.forEach(p => p.ex.forEach(([n,s]) => { const m = EX[n]?.[4]; if(m && m in v) v[m] += s; })); return v; };
   let v = vol();
   for(const m of MUSCLES){
     const [lo, hi] = m === 'Glúteos' || m === 'Abdômen' ? [4,16] : m === 'Panturrilha' ? [6,16] : [10,20];

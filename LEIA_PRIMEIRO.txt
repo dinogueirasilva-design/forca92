@@ -1,0 +1,18 @@
+FORÇA 92 — V8.3
+
+ATUALIZAR NO GITHUB (pelo notebook)
+1. Repositório → Add file → Upload files.
+2. Arraste index.html, sw.js e a PASTA images inteira (tem 302 fotos novas).
+3. Commit changes. Espere 1–2 min (aba Actions fica verde).
+4. No iPhone: feche e abra o app 2x. Aba Nuvem → rodapé "versão 8.3".
+
+NOVIDADES
+- Trocar qualquer exercício do treino (botão "⇄ Trocar exercício" em cada card).
+  Você escolhe se a troca vale só hoje ou também para a ficha.
+- Remover qualquer exercício: só hoje ou hoje e da ficha.
+- Toda alteração na ficha fica guardada em Evolução → Análise → Fichas anteriores.
+- Biblioteca com 214 exercícios e fotos, filtrada por membro:
+  Peito, Costas, Ombros, Trapézio, Bíceps, Tríceps, Antebraço, Quadríceps,
+  Posteriores, Glúteos, Adutores, Panturrilha, Abdômen, Lombar.
+- Inclui V8.2: cronômetro do treino, tela acesa, timer em tela cheia,
+  adicionar exercício no meio do treino.
