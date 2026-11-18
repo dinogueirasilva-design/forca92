@@ -340,7 +340,7 @@ table.t th{color:var(--mut);font-weight:600;font-size:11px}
    FORÇA 92 — V8
    Compatível com os dados da V5–V7 (mesma chave local e mesma tabela).
    ===================================================================== */
-const APP_VERSION = '8.3';
+const APP_VERSION = '8.4';
 const KEY = 'forca92.v5';           // mesma chave das versões anteriores: dados preservados
 const CLOUD_KEY = 'forca92.cloud';
 const PENDING_KEY = 'forca92.photoPending';
@@ -441,6 +441,7 @@ function merge(a, b){
   if(stamp(b.nextDayAt) > stamp(a.nextDayAt)){ out.nextDay = b.nextDay; out.nextDayAt = b.nextDayAt; }
   out.photos = {...b.photos};
   for(const [n,p] of Object.entries(a.photos)) if(!out.photos[n] || stamp(p.updatedAt) >= stamp(out.photos[n].updatedAt)) out.photos[n] = p;
+  if(stamp(b.blockAt) > stamp(a.blockAt)){ out.activeBlock = b.activeBlock; out.blockAt = b.blockAt; }
   if(stamp(b.settingsAt) > stamp(a.settingsAt)){ out.settings = b.settings; out.settingsAt = b.settingsAt; }
   out.plans = a.plans || b.plans || clone(PLANS);
   if(stamp(b.plansAt) > stamp(a.plansAt)){ out.plans = b.plans; out.plansAt = b.plansAt; out.planBlock = b.planBlock; out.planStartedAt = b.planStartedAt; }
@@ -471,8 +472,58 @@ function setStatus(txt, kind=''){ $('sync').textContent = txt; $('syncdot').clas
 
 /* ---------- treino ---------- */
 const draftKey = d => 'active_'+d;
+/* ---------- programas prontos (blocos) ---------- */
+const PROGRAMS = {
+  superiores: {
+    name: 'Mês de Superiores', weeks: 4,
+    desc: 'Foco em peito, costas, ombros e braços (75 séries/semana). Pernas em manutenção 1× por semana, com a mesma carga.',
+    // [dia, índice do exercício] que ganham +1 série na semana 3 (pico)
+    peak: [[0,0],[1,0],[2,0],[3,0]],
+    weekNotes: {1:'Ajuste: aprenda os exercícios novos, 2–3 reps em reserva. Faça o check-in.', 2:'Carga: suba onde bateu o topo da faixa. 1–2 reps em reserva.', 3:'Pico: +1 série no 1º exercício de D1 a D4 (já incluída). Última série perto da falha.', 4:'Fechar e medir: volume da semana 2. Check-in no último dia.'},
+    plans: [
+      {name:'Peito + Tríceps', short:'Peito', ex:[['Supino inclinado com halteres',4,8,10],['Supino reto na máquina',3,8,10],['Crucifixo inclinado na polia',3,12,15],['Peck deck',2,12,15],['Tríceps francês na corda',3,10,12],['Tríceps corda',3,10,12]]},
+      {name:'Costas + Bíceps', short:'Costas', ex:[['Puxada larga pronada',4,8,10],['Remada fechada neutra',3,8,10],['Remada unilateral com halter',3,8,12],['Pulldown na corda',2,12,15],['Rosca bíceps inclinado',3,10,12],['Rosca Scott unilateral',3,8,10]]},
+      {name:'Ombros + Braços', short:'Ombros', ex:[['Elevação lateral com halteres',4,12,15],['Desenvolvimento de ombros na máquina',3,8,10],['Crucifixo inverso na polia',3,12,15],['Rosca na polia',3,10,12],['Tríceps testa com barra W',3,8,12],['Rosca martelo',2,10,12],['Tríceps barra V',2,10,12]]},
+      {name:'Superiores completo', short:'Superior', ex:[['Supino inclinado na máquina',3,8,10],['Remada articulada',3,8,12],['Crossover polia baixa',3,12,15],['Puxada supinada',3,8,12],['Elevação lateral na polia',3,12,15],['Rosca direta barra EZ',2,8,12],['Paralelas foco tríceps',2,8,12]]},
+      {name:'Pernas manutenção + Abdômen', short:'Pernas', ex:[['Agachamento hack ou Smith',3,6,10],['Stiff com halteres',3,8,10],['Leg press 45°',2,10,12],['Flexora sentada',2,10,12],['Panturrilha em pé',3,12,15],['Abdômen máquina',3,12,15],['Elevação de pernas na barra',2,10,15]]}
+    ]
+  }
+};
+function blockWeek(){
+  const b = state.activeBlock; if(!b) return 0;
+  return Math.floor(Math.max(0, daysBetween(b.startDate, today())) / 7) + 1;
+}
+function activateProgram(key){
+  const P = PROGRAMS[key]; if(!P) return;
+  const nowIso = new Date().toISOString();
+  state.planHistory.push({id:uuid(), date:nowIso, reason:`Ficha guardada antes de ativar: ${P.name}`, plans:clone(state.plans), version:state.planVersion||6});
+  state.activeBlock = {key, name:P.name, weeks:P.weeks, startDate:today(), prevPlans:clone(state.plans), prevStartedAt:state.planStartedAt||null, prevBlock:state.planBlock||null};
+  state.blockAt = nowIso;
+  state.plans = clone(P.plans); state.plansAt = nowIso; state.planStartedAt = today();
+  for(const k of Object.keys(state.drafts)) if(!hasData(state.drafts[k])){ delete state.drafts[k]; state.deleted.drafts[k] = Date.now(); }
+  state.nextDay = 0; state.nextDayAt = nowIso; day = 0;
+  save(); toast(`${P.name} ativado. Comece pelo D1.`, 3500);
+  tab = 'train'; render(); window.scrollTo({top:0});
+}
+function endProgram(restore){
+  const b = state.activeBlock; if(!b) return;
+  const nowIso = new Date().toISOString();
+  if(restore){
+    state.planHistory.push({id:uuid(), date:nowIso, reason:`${b.name} encerrado; ficha anterior restaurada`, plans:clone(state.plans), version:state.planVersion||6});
+    state.plans = clone(b.prevPlans); state.plansAt = nowIso; state.planStartedAt = today();
+    for(const k of Object.keys(state.drafts)) if(!hasData(state.drafts[k])){ delete state.drafts[k]; state.deleted.drafts[k] = Date.now(); }
+    state.nextDay = 0; state.nextDayAt = nowIso; day = 0;
+  }
+  state.activeBlock = null; state.blockAt = nowIso;
+  save(); toast(restore ? 'Ficha anterior de volta. Na 1ª semana, faça as pernas com ~60% das séries.' : 'Bloco encerrado. A ficha atual continua.', 5000);
+  render(); window.scrollTo({top:0});
+}
 function template(d){
-  return { date: today(), day: d, ex: state.plans[d].ex.map(([name,count,min,max]) => ({name,min,max,note:'',sets:Array.from({length:count},()=>({kg:'',reps:'',done:false}))})) };
+  const b = state.activeBlock, P = b && PROGRAMS[b.key], peakWeek = b && blockWeek() === 3;
+  return { date: today(), day: d, ex: state.plans[d].ex.map(([name,count,min,max], j) => {
+    const plus = peakWeek && P.peak.some(([pd,pj]) => pd === d && pj === j && P.plans[d]?.ex[j]?.[0] === name) ? 1 : 0;
+    return {name,min,max,note:'',sets:Array.from({length:count+plus},()=>({kg:'',reps:'',done:false}))};
+  }) };
 }
 function getDraft(d){ return state.drafts[draftKey(d)] || template(d); }
 function ensureDraft(d){
@@ -507,7 +558,12 @@ function renderTrain(){
   const all = d.ex.flatMap(e => e.sets), done = all.filter(s => s.done).length;
   const stale = saved && hasData(d) && d.date && d.date < today();
   let h = `<div class="pagehead"><div><small>DISCIPLINA · FOCO · EVOLUÇÃO</small><h2>Seu treino</h2></div><span class="badge">D${day+1} / D5</span></div>
-  <div class="days">${state.plans.map((p,i) => `<button class="day ${i===day?'sel':''} ${i===state.nextDay?'next':''}" data-day="${i}"><b>D${i+1}</b><span>${esc(DAY_SHORT[i]||p.name)}</span></button>`).join('')}</div>`;
+  <div class="days">${state.plans.map((p,i) => `<button class="day ${i===day?'sel':''} ${i===state.nextDay?'next':''}" data-day="${i}"><b>D${i+1}</b><span>${esc(p.short||DAY_SHORT[i]||p.name)}</span></button>`).join('')}</div>`;
+  if(state.activeBlock){
+    const b = state.activeBlock, w = blockWeek(), P = PROGRAMS[b.key];
+    if(w > b.weeks) h += `<div class="note"><b>✓ ${esc(b.name)} concluído</b> (${b.weeks} semanas desde ${br(b.startDate)}). Faça o check-in final e escolha:<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn-y btn-sm" id="blkBack">Voltar à ficha anterior</button><button class="btn-g btn-sm" id="blkKeep">Manter esta ficha</button></div></div>`;
+    else h += `<div class="note"><b>${esc(b.name)} · semana ${w} de ${b.weeks}</b><br><span style="font-size:13px">${esc(P?.weekNotes?.[w]||'')}</span></div>`;
+  }
   if(checkinDue()) h += `<div class="note" style="display:flex;align-items:center;gap:10px"><span style="flex:1">📸 <b>Check-in semanal pendente.</b> ${lastCheckin()?`Último em ${br(lastCheckin().date)}.`:'Faça o primeiro para começar a comparar.'}</span><button class="btn-y btn-sm" id="ckGo">Fazer</button></div>`;
   else { const A = analysis(); if(A.verdict === 'trocar') h += `<div class="note" style="display:flex;align-items:center;gap:10px"><span style="flex:1">🔁 <b>Hora de trocar a ficha:</b> ${esc(A.reasons.join('; '))}.</span><button class="btn-y btn-sm" id="planGo">Ver</button></div>`; }
   if(day !== state.nextDay) h += `<div class="note">Pela sequência, o próximo treino é o <b>D${state.nextDay+1} — ${esc(state.plans[state.nextDay].name)}</b>. Você pode treinar este mesmo assim.</div>`;
@@ -613,6 +669,8 @@ function wireTrain(){
   root.querySelectorAll('[data-delex]').forEach(b => b.onclick = () => openRemoveSheet(+b.dataset.delex));
   root.querySelectorAll('[data-swap]').forEach(b => b.onclick = () => openSwapSheet(+b.dataset.swap));
   $('ckGo') && ($('ckGo').onclick = openCheckin);
+  $('blkBack') && ($('blkBack').onclick = () => { if(confirm('Voltar à ficha que você usava antes do bloco?')) endProgram(true); });
+  $('blkKeep') && ($('blkKeep').onclick = () => { if(confirm('Encerrar o bloco e continuar com esta ficha?')) endProgram(false); });
   $('planGo') && ($('planGo').onclick = () => { tab = 'evo'; evoTab = 'analise'; render(); window.scrollTo({top:0}); });
 }
 function keepScroll(fn){ const y = window.scrollY; fn(); window.scrollTo({top:y}); }
@@ -1675,7 +1733,14 @@ const STATUS_TXT = {progredindo:['up','▲ progredindo'], 'platô':['','■ plat
 function renderAnaliseTab(){
   const A = analysis();
   const V = {trocar:['🔁 Hora de trocar a ficha', 'var(--y)'], atencao:['⚠ Atenção: progresso desacelerando', '#e0a52a'], ok:['✓ Ficha funcionando — mantenha', 'var(--ok)'], dados:['· Poucos dados ainda', 'var(--mut)']}[A.verdict];
-  let h = `<div class="card session"><h3 style="color:${V[1]}">${V[0]}</h3>
+  const AB = state.activeBlock;
+  let h = `<div class="card" style="border-color:${AB?'var(--y)':'var(--line)'}"><div class="row"><h3>Programas prontos</h3>${AB?`<span class="badge solid">ATIVO · SEM ${Math.min(blockWeek(),AB.weeks)}/${AB.weeks}</span>`:''}</div>
+    ${Object.entries(PROGRAMS).map(([k,P]) => `<div style="margin-top:10px"><b>${esc(P.name)}</b> <small>· ${P.weeks} semanas · 5 dias</small><p class="muted" style="font-size:13px;margin:4px 0 8px">${esc(P.desc)}</p>
+      ${AB && AB.key === k ? `<p style="font-size:13px;margin:0 0 8px">Ativado em ${br(AB.startDate)}. Sua ficha anterior está guardada.</p><button class="btn-g w100" id="prgEnd">Encerrar e voltar à ficha anterior</button>`
+        : `<details class="how" style="margin:0 0 8px"><summary>Ver os 5 treinos</summary>${P.plans.map((pl,d) => `<p><b>D${d+1} — ${esc(pl.name)}</b><br><small>${pl.ex.map(e => `${esc(e[0])} ${e[1]}×${e[2]}–${e[3]}`).join(' · ')}</small></p>`).join('')}</details>
+           <button class="btn-y w100" data-prg="${k}" ${AB?'disabled':''}>${AB?'Encerre o bloco atual antes':'Ativar '+esc(P.name)}</button>`}</div>`).join('')}
+  </div>`;
+  h += `<div class="card session"><h3 style="color:${V[1]}">${V[0]}</h3>
     ${A.reasons.length ? `<p class="muted" style="font-size:13px;margin:6px 0 0">Motivo: ${A.reasons.join('; ')}.</p>` : ''}
     <div class="grid3" style="margin-top:12px">
       <div class="stat"><small>Ganho/semana</small><b>${A.rate!=null?fmtKg(A.rate):'—'}<i> kg</i></b><em class="muted">${A.rateLo?`alvo ${fmtKg(A.rateLo)}–${fmtKg(A.rateHi)}`:'registre o peso'}</em></div>
@@ -1726,6 +1791,12 @@ function wireEvoExtra(){
   $('genPlan') && ($('genPlan').onclick = () => { proposal = generatePlan(proposal ? proposal.priorities : analysis().priorities); keepScroll(renderEvo); });
   $('dropPlan') && ($('dropPlan').onclick = () => { proposal = null; keepScroll(renderEvo); });
   $('okPlan') && ($('okPlan').onclick = approveProposal);
+  root.querySelectorAll('[data-prg]').forEach(b => b.onclick = () => {
+    const P = PROGRAMS[b.dataset.prg];
+    if(!confirm(`Ativar ${P.name}?\n\nA ficha dos 5 dias será trocada de uma vez. Sua ficha atual fica guardada e volta com um toque ao fim das ${P.weeks} semanas. Treinos já registrados não mudam.`)) return;
+    activateProgram(b.dataset.prg);
+  });
+  $('prgEnd') && ($('prgEnd').onclick = () => { if(confirm('Encerrar o bloco agora e voltar à ficha anterior?')) endProgram(true); });
   fillCkPhotos(root);
 }
 
